@@ -1,0 +1,8 @@
+{
+  "name": "claw-plugin",
+  "version": "1.0.0",
+  "description": "NanoClaw 插件",
+  "agents": [],
+  "commands": [],
+  "skills": ["./skills/"]
+}

@@ -1,0 +1,8 @@
+{
+  "name": "code-plugin",
+  "version": "1.0.0",
+  "description": "代码相关插件集合",
+  "agents": [],
+  "commands": [],
+  "skills": ["./skills/"]
+}

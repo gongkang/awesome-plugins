@@ -1,0 +1,32 @@
+{
+  "skill_name": "browser-tester",
+  "evals": [
+    {
+      "id": 1,
+      "eval_name": "frontend-react-app",
+      "prompt": "我刚刚完成了一个 React 前端项目的开发，现在需要测试一下功能。项目在 /Users/kuchen/AiProjects/alphaquant/frontend，用浏览器测试一下所有交互和 UI 问题，测试深度用 standard。",
+      "expected_output": "完成标准深度测试，覆盖首页加载、导航交互、表单提交、响应式布局检查，生成精简 Bug 报告并自动修复发现的问题",
+      "files": [],
+      "project_type": "frontend",
+      "test_depth": "standard"
+    },
+    {
+      "id": 2,
+      "eval_name": "fullstack-app-frontend-focus",
+      "prompt": "帮我测试一下这个全栈项目，前端是 Next.js，后端是 FastAPI。主要测前端功能就好了，后端接口不用专门测。快速扫描一下有没有什么明显的 bug。",
+      "expected_output": "执行快速测试，通过前端交互验证功能（如登录、数据展示），不单独测试 API 端点，发现 P0/P1 级别问题并修复",
+      "files": [],
+      "project_type": "fullstack",
+      "test_depth": "quick"
+    },
+    {
+      "id": 3,
+      "eval_name": "comprehensive-ui-test",
+      "prompt": "准备发布了，帮我做一次全面的 UI 和功能测试。这个项目是 Vue3 + Element Plus，需要检查所有页面的交互、表单验证、响应式布局，还有控制台错误。",
+      "expected_output": "执行全面测试，覆盖所有页面和交互，检查控制台错误和网络请求，生成完整 Bug 报告并修复所有 P0/P1 问题",
+      "files": [],
+      "project_type": "frontend",
+      "test_depth": "comprehensive"
+    }
+  ]
+}

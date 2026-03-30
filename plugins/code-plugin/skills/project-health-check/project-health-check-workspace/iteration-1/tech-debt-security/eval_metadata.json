@@ -1,0 +1,19 @@
+{
+  "eval_id": 2,
+  "eval_name": "tech-debt-security",
+  "prompt": "检查这个项目的技术债务和安全性问题",
+  "assertions": [
+    {
+      "name": "报告包含技术债务分析",
+      "description": "报告包含 TODO/FIXME 统计、过时依赖、代码重复等技术债务内容"
+    },
+    {
+      "name": "报告包含安全性分析",
+      "description": "报告包含敏感信息泄露、漏洞模式、依赖漏洞等安全性内容"
+    },
+    {
+      "name": "问题有具体位置",
+      "description": "安全问题和技术债务问题都有文件位置和行号"
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "name": "awesome-plugins",
+  "version": "1.0.0",
+  "description": "Collection of awesome Claude Code plugins",
+  "agents": [],
+  "commands": [],
+  "skills": []
+}

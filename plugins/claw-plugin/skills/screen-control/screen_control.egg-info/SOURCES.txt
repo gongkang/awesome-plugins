@@ -1,0 +1,6 @@
+pyproject.toml
+screen_control.egg-info/PKG-INFO
+screen_control.egg-info/SOURCES.txt
+screen_control.egg-info/dependency_links.txt
+screen_control.egg-info/requires.txt
+screen_control.egg-info/top_level.txt

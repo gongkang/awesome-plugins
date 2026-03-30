@@ -1,0 +1,43 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "awesome-plugins",
+  "description": "Awesome Claude Code plugins collection",
+  "owner": {
+    "name": "gongkang",
+    "email": ""
+  },
+  "plugins": [
+    {
+      "name": "code-plugin",
+      "source": "./plugins/code-plugin",
+      "description": "代码相关插件集合",
+      "version": "1.0.0",
+      "author": {
+        "name": "gongkang"
+      },
+      "homepage": "https://github.com/gongkang/awesome-plugins",
+      "repository": "https://github.com/gongkang/awesome-plugins",
+      "license": "MIT",
+      "keywords": ["code", "development"],
+      "category": "development",
+      "tags": ["code", "productivity"],
+      "strict": false
+    },
+    {
+      "name": "claw-plugin",
+      "source": "./plugins/claw-plugin",
+      "description": "NanoClaw 插件",
+      "version": "1.0.0",
+      "author": {
+        "name": "gongkang"
+      },
+      "homepage": "https://github.com/gongkang/awesome-plugins",
+      "repository": "https://github.com/gongkang/awesome-plugins",
+      "license": "MIT",
+      "keywords": ["claw", "nanoclaw"],
+      "category": "productivity",
+      "tags": ["claw", "automation"],
+      "strict": false
+    }
+  ]
+}
