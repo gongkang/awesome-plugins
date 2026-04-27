@@ -1,0 +1,4 @@
+interface:
+  display_name: "AI 对话聚合搜索"
+  short_description: "使用默认子代理按标准或深入模式访问多个 AI 对话网站"
+  default_prompt: "使用 $ai-dialog-search 派发一个默认子代理执行 collector 任务，查询我配置好的 AI 对话网站；标准模式收集足够可用结果后汇总，深入模式访问全部目标站点。"

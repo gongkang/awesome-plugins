@@ -1,0 +1,24 @@
+{
+  "ai-dialog-search": {
+    "evals": [
+      {
+        "id": 1,
+        "prompt": "向所有已配置的 AI 对话网站询问：量子计算和经典计算的主要区别是什么？",
+        "expected_output": "触发 ai-dialog-search，识别“所有已配置”为 deep 模式，使用单个 collector 顺序访问全部白名单目标站点，返回结构化结果并由父 agent 汇总，包含一致结论和分歧点",
+        "files": []
+      },
+      {
+        "id": 2,
+        "prompt": "让 DeepSeek、Kimi、豆包都回答一下：我该怎么判断一个开源项目是否靠谱？最后汇总成一个结论。",
+        "expected_output": "触发 ai-dialog-search，识别点名站点“都回答”为 deep 模式，使用单个 collector 按白名单顺序访问 DeepSeek、Kimi、豆包，跳过不可用站点，并由父 agent 给出综合结论",
+        "files": []
+      },
+      {
+        "id": 3,
+        "prompt": "多问几个 AI 交叉验证一下：RAG 系统什么时候应该用 reranker？",
+        "expected_output": "触发 ai-dialog-search，默认使用 standard 模式，将问题归一化后交给默认子代理执行 collector 任务，按白名单顺序访问已启用站点，收集到足够可用结果后由父 agent 汇总",
+        "files": []
+      }
+    ]
+  }
+}

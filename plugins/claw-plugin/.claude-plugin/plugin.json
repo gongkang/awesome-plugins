@@ -3,6 +3,6 @@
   "version": "1.0.0",
   "description": "NanoClaw 插件",
   "agents": [],
-  "commands": [],
+  "commands": ["./commands/"],
   "skills": ["./skills/"]
 }
