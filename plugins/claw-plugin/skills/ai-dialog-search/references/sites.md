@@ -33,10 +33,10 @@
 - url: https://chat.deepseek.com/
 - notes: 交互细节见 [browser-operations.md](./browser-operations.md) 的 DeepSeek 专区。
 
-### Qianwen（国内版）
+### Qianwen
 - enabled: yes
 - url: https://qianwen.com/
-- notes: 交互细节见 [browser-operations.md](./browser-operations.md) 的 Qwen/Qianwen 专区。如需登录则跳过。
+- notes: 交互细节见 [browser-operations.md](./browser-operations.md) 的 Qianwen 专区。如需登录则跳过。
 
 ### Kimi
 - enabled: yes
