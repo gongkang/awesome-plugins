@@ -40,6 +40,13 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).parent))
 from utils.detector import ChangeDetector, FrameData, FrameBuffer
 
+# 性能监控（可选依赖）
+try:
+    import psutil
+    HAS_PSUTIL = True
+except ImportError:
+    HAS_PSUTIL = False
+
 
 # 状态文件路径
 STATE_FILE = Path("/tmp/screen_monitor_state.json")
@@ -212,6 +219,18 @@ class ScreenMonitor:
         PID_FILE.unlink(missing_ok=True)
         STATE_FILE.unlink(missing_ok=True)
 
+    def _get_performance_stats(self) -> dict:
+        """获取性能统计"""
+        stats = {}
+        if HAS_PSUTIL:
+            try:
+                process = psutil.Process(os.getpid())
+                stats["cpu_percent"] = round(process.cpu_percent(interval=0.1), 1)
+                stats["memory_mb"] = round(process.memory_info().rss / 1024 / 1024, 1)
+            except Exception:
+                pass
+        return stats
+
     def status(self):
         """获取状态"""
         # 检查其他进程
@@ -244,6 +263,7 @@ class ScreenMonitor:
             "runtime_seconds": round(time.time() - self.state.start_time, 1) if self.state.start_time else 0,
             "last_change": round(time.time() - self.state.last_change_time, 1) if self.state.last_change_time else None
         }
+        result.update(self._get_performance_stats())
         print(json.dumps(result, indent=2))
 
     def keyframe(self, output: str, mode: str = "latest"):
@@ -410,11 +430,78 @@ class ScreenMonitor:
 
     def wait_text(self, text: str, timeout: float = 120.0,
                   region: Optional[str] = None, output: Optional[str] = None):
-        """等待文字出现（需要 OCR）"""
-        # 简化实现：提示用户 OCR 未集成
+        """等待文字出现（使用 Tesseract OCR）"""
+        self._ensure_sct()
+
+        # 解析区域
+        target_region = None
+        if region:
+            parts = [int(x.strip()) for x in region.split(',')]
+            if len(parts) == 4:
+                target_region = tuple(parts)
+
+        # 检查 OCR 依赖
+        try:
+            import pytesseract
+        except ImportError:
+            print(json.dumps({
+                "status": "error",
+                "message": "wait-text 需要 pytesseract 支持。请运行: pip install pytesseract && brew install tesseract"
+            }))
+            return
+
+        prev_hash = None
+        start_time = time.time()
+
+        while time.time() - start_time < timeout:
+            frame = self._capture_frame()
+
+            # 如果指定了区域，裁剪到目标区域
+            if target_region:
+                x, y, w, h = target_region
+                frame = frame[y:y+h, x:x+w]
+
+            # OCR 识别
+            try:
+                rgb_frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+                ocr_result = pytesseract.image_to_data(
+                    rgb_frame, lang='chi_sim+eng', output_type=pytesseract.Output.DICT
+                )
+
+                # 搜索目标文字
+                for i, txt in enumerate(ocr_result['text']):
+                    if text.lower() in txt.strip().lower():
+                        elapsed = time.time() - start_time
+                        conf = ocr_result['conf'][i]
+                        bounds = [
+                            ocr_result['left'][i],
+                            ocr_result['top'][i],
+                            ocr_result['width'][i],
+                            ocr_result['height'][i]
+                        ]
+
+                        if output:
+                            self._save_frame(frame, output)
+
+                        print(json.dumps({
+                            "status": "found",
+                            "elapsed": round(elapsed, 2),
+                            "text": text,
+                            "matched_text": txt.strip(),
+                            "bounds": bounds,
+                            "confidence": conf,
+                            "output": output
+                        }))
+                        return
+            except Exception as e:
+                sys.stderr.write(f"OCR 错误: {e}\n")
+
+            time.sleep(1.0)  # OCR 较慢，降低检测频率
+
         print(json.dumps({
-            "status": "error",
-            "message": "wait-text 需要 OCR 支持，当前未集成。请使用 wait-change 替代。"
+            "status": "timeout",
+            "elapsed": round(time.time() - start_time, 2),
+            "text": text
         }))
 
     # ==================== 录制功能 ====================

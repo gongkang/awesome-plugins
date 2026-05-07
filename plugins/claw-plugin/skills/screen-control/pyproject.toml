@@ -18,6 +18,16 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+vision = [
+    "openai>=2.0.0",
+]
+ocr = [
+    "pytesseract>=0.3.10",
+]
+macos = [
+    "pyobjc-core>=9.0.0",
+    "pyobjc-framework-Cocoa>=9.0.0",
+]
 dev = [
     "pytest>=7.0.0",
 ]

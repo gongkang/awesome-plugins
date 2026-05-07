@@ -6,8 +6,9 @@
 1. Accessibility API - macOS 系统级 UI 树访问（最精确）
 2. OCR 文字定位 - 识别屏幕文字位置
 3. 颜色特征定位 - 特定颜色/形状的图标
-4. 坐标估算兜底 - 基于常识估算位置
-5. AI 视觉定位 - AI 看图估算坐标（最终兜底）
+4. 云端视觉定位 - OpenAI 兼容多模态模型返回 bbox
+5. 坐标估算兜底 - 基于常识估算位置
+6. AI 视觉定位 - AI 看图估算坐标（最终兜底）
 
 执行前校验闭环：
 - 移动鼠标到目标位置
@@ -35,6 +36,7 @@
     python control.py drag <from_x> <from_y> <to_x> <to_y>
     python control.py scroll <amount>
     python control.py type "文字"
+    python control.py clear-and-type "文字"
     python control.py hotkey "cmd+c"
 """
 
@@ -42,6 +44,7 @@ import argparse
 import json
 import os
 import random
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -851,16 +854,49 @@ class ScreenController:
 
     def _type_chinese(self, text: str):
         """使用剪贴板输入中文"""
-        import pyperclip
+        self._paste_text(text)
 
-        pyperclip.copy(text)
-        # 粘贴
-        if sys.platform == "darwin":  # macOS
-            pyautogui.hotkey("command", "v")
-        else:  # Windows/Linux
+    def _paste_text(self, text: str):
+        """使用系统剪贴板粘贴文本，macOS 下避开 pyautogui 中文输入不稳定问题"""
+        if sys.platform == "darwin":
+            subprocess.run(
+                ["pbcopy"],
+                input=text,
+                text=True,
+                check=True,
+            )
+            subprocess.run(
+                [
+                    "osascript",
+                    "-e",
+                    'tell application "System Events" to keystroke "v" using command down',
+                ],
+                check=True,
+            )
+        else:
+            import pyperclip
+
+            pyperclip.copy(text)
             pyautogui.hotkey("ctrl", "v")
 
         time.sleep(0.1)  # 等待粘贴完成
+
+    def clear_and_type_text(self, text: str):
+        """清空当前输入框并粘贴文本"""
+        if sys.platform == "darwin":
+            pyautogui.hotkey("command", "a")
+        else:
+            pyautogui.hotkey("ctrl", "a")
+        time.sleep(0.05)
+        pyautogui.hotkey("delete")
+        time.sleep(0.05)
+        self._paste_text(text)
+
+        print(json.dumps({
+            "action": "clear_and_type",
+            "text": text,
+            "status": "success"
+        }, ensure_ascii=False))
 
     def hotkey(self, keys: str):
         """
@@ -969,7 +1005,7 @@ class ScreenController:
             }))
 
 
-def main():
+def build_parser():
     parser = argparse.ArgumentParser(description="屏幕控制器")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
@@ -995,7 +1031,7 @@ def main():
     # locate 命令（新增）- 只定位不点击
     locate_parser = subparsers.add_parser("locate", help="定位目标并返回坐标")
     locate_parser.add_argument("target", help="目标描述")
-    locate_parser.add_argument("--prefer", choices=["accessibility", "ocr", "color", "ai"],
+    locate_parser.add_argument("--prefer", choices=["accessibility", "ocr", "color", "vision", "ai"],
                                help="优先使用的定位方式")
 
     # double_click 命令
@@ -1023,6 +1059,10 @@ def main():
     # type 命令
     type_parser = subparsers.add_parser("type", help="输入文字")
     type_parser.add_argument("text", help="要输入的文字")
+
+    # clear-and-type 命令
+    clear_type_parser = subparsers.add_parser("clear-and-type", help="清空当前输入框并输入文字")
+    clear_type_parser.add_argument("text", help="要输入的文字")
 
     # hotkey 命令
     hotkey_parser = subparsers.add_parser("hotkey", help="快捷键")
@@ -1059,6 +1099,11 @@ def main():
     visual_approach_parser.add_argument("--start-y", type=int, default=None,
                                         help="初始 Y 坐标")
 
+    return parser
+
+
+def main():
+    parser = build_parser()
     args = parser.parse_args()
 
     controller = ScreenController()
@@ -1089,6 +1134,8 @@ def main():
         controller.scroll(args.amount)
     elif args.command == "type":
         controller.type_text(args.text)
+    elif args.command == "clear-and-type":
+        controller.clear_and_type_text(args.text)
     elif args.command == "hotkey":
         controller.hotkey(args.keys)
     elif args.command == "wait":

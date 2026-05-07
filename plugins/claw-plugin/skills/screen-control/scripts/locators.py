@@ -5,15 +5,18 @@
 定位策略（按优先级）：
 1. Accessibility API - macOS 系统级 UI 树访问
 2. OCR 文字定位 - 识别屏幕文字位置
-3. AI 视觉定位 - AI 看图估算坐标（兜底）
-4. 颜色特征定位 - 特定颜色/形状的图标
+3. 颜色特征定位 - 特定颜色/形状的图标
+4. 云端视觉定位 - 多模态模型返回 bbox
+5. AI 视觉定位 - AI 看图估算坐标（兜底）
 """
 
 import json
 import os
+import re
 import subprocess
 import sys
 import time
+import base64
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
@@ -103,6 +106,8 @@ class AccessibilityLocator(BaseLocator):
     def _get_focused_window(self):
         """获取当前焦点窗口"""
         try:
+            from AppKit import AXUIElementCopyAttributeValue
+
             app = self.NSWorkspace.sharedWorkspace().frontmostApplication()
             if app is None:
                 return None
@@ -118,7 +123,7 @@ class AccessibilityLocator(BaseLocator):
             if error == 0:
                 return ref
             return None
-        except Exception as e:
+        except Exception:
             return None
 
     def _get_all_elements(self, container, depth: int = 0, max_depth: int = 5) -> List[dict]:
@@ -153,7 +158,7 @@ class AccessibilityLocator(BaseLocator):
     def _extract_element_info(self, element) -> Optional[dict]:
         """提取元素信息"""
         try:
-            from AppKit import AXUIElementCopyAttributeValue, CFGetTypeID, CFGetTypeID
+            from AppKit import AXUIElementCopyAttributeValue
 
             info = {}
 
@@ -258,7 +263,6 @@ class AccessibilityLocator(BaseLocator):
         # 角色类型关键词
         roles = {
             "按钮": "button",
-            "按钮": "button",
             "输入框": "text",
             "搜索": "search",
             "关闭": "close",
@@ -280,7 +284,6 @@ class AccessibilityLocator(BaseLocator):
     def _match_element(self, elem: dict, keywords: List[str],
                        description: str) -> bool:
         """判断元素是否匹配描述"""
-        # 检查角色
         role = elem.get("role", "").lower()
         title = elem.get("title", "").lower()
         desc = elem.get("description", "").lower()
@@ -288,14 +291,10 @@ class AccessibilityLocator(BaseLocator):
 
         all_text = f"{role} {title} {desc} {value}"
 
-        # 检查关键词
-        for kw in keywords:
-            if kw.lower() in all_text:
+        # 直接匹配描述中的每个词（支持中文字符级别的模糊匹配）
+        for char in description:
+            if char in all_text:
                 return True
-
-        # 直接检查描述是否包含
-        if description.lower() in all_text:
-            return True
 
         return False
 
@@ -510,6 +509,237 @@ class ColorLocator(BaseLocator):
         return None
 
 
+class VisionLocator(BaseLocator):
+    """
+    云端多模态定位器
+
+    使用 OpenAI 兼容 Responses API 请求视觉模型返回严格 JSON bbox。
+    没有视觉模型 API key 或 SDK 不可用时快速失败，由后续 fallback 继续处理。
+    """
+
+    SOURCE = "vision"
+    def __init__(
+        self,
+        api_key: str = None,
+        model: str = None,
+        base_url: str = None,
+    ):
+        self.home_env = self._load_home_env()
+        self.api_key = api_key or self._config_value("OPENAI_API_KEY")
+        self.model = model or self._config_value("OPENAI_MODEL")
+        self.base_url = base_url or self._config_value("OPENAI_BASE_URL")
+
+    def can_handle(self, description: str) -> bool:
+        return bool(description.strip())
+
+    def _config_value(self, name: str) -> Optional[str]:
+        value = os.environ.get(name)
+        if value:
+            return value
+        return self.home_env.get(name)
+
+    def _load_home_env(self) -> Dict[str, str]:
+        env_path = Path.home() / ".env"
+        if not env_path.exists():
+            return {}
+
+        values = {}
+        try:
+            for raw_line in env_path.read_text(encoding="utf-8").splitlines():
+                line = raw_line.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                key, value = line.split("=", 1)
+                key = key.strip()
+                value = value.strip().strip("'\"")
+                if key in {"OPENAI_API_KEY", "OPENAI_BASE_URL", "OPENAI_MODEL"}:
+                    values[key] = value
+        except OSError:
+            return {}
+        return values
+
+    def find(self, description: str, screenshot: np.ndarray = None) -> LocatorResult:
+        if not self.api_key:
+            return LocatorResult(
+                success=False,
+                error="OPENAI_API_KEY is not set in environment or ~/.env",
+                source=self.SOURCE,
+            )
+
+        if not self.model:
+            return LocatorResult(
+                success=False,
+                error="OPENAI_MODEL is not set in environment or ~/.env",
+                source=self.SOURCE,
+            )
+
+        if screenshot is None:
+            screenshot_result = self._capture_screenshot()
+            if isinstance(screenshot_result, LocatorResult):
+                return screenshot_result
+            screenshot = screenshot_result
+
+        try:
+            from openai import OpenAI
+        except ImportError as e:
+            return LocatorResult(
+                success=False,
+                error=f"openai SDK is not installed: {e}",
+                source=self.SOURCE,
+            )
+
+        h, w = screenshot.shape[:2]
+        prompt = self._build_prompt(description, (w, h))
+
+        try:
+            client_kwargs = {"api_key": self.api_key}
+            if self.base_url:
+                client_kwargs["base_url"] = self.base_url
+            client = OpenAI(**client_kwargs)
+            response = client.responses.create(
+                model=self.model,
+                input=[
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "input_text", "text": prompt},
+                            {"type": "input_image", "image_url": self._image_to_data_url(screenshot)},
+                        ],
+                    }
+                ],
+            )
+            text = self._extract_response_text(response)
+            return self._parse_response_text(text)
+        except Exception as e:
+            return LocatorResult(
+                success=False,
+                error=f"vision request failed: {e}",
+                source=self.SOURCE,
+            )
+
+    def _capture_screenshot(self):
+        try:
+            import mss
+            sct = mss.mss()
+            monitor = sct.monitors[1]
+            screenshot_obj = sct.grab(monitor)
+            screenshot = np.array(screenshot_obj)
+            return cv2.cvtColor(screenshot, cv2.COLOR_BGRA2RGB)
+        except Exception as e:
+            return LocatorResult(
+                success=False,
+                error=f"截图失败：{e}",
+                source=self.SOURCE,
+            )
+
+    def _image_to_data_url(self, screenshot: np.ndarray) -> str:
+        image_bgr = cv2.cvtColor(screenshot, cv2.COLOR_RGB2BGR)
+        ok, encoded = cv2.imencode(".png", image_bgr)
+        if not ok:
+            raise RuntimeError("failed to encode screenshot as PNG")
+        payload = base64.b64encode(encoded.tobytes()).decode("ascii")
+        return f"data:image/png;base64,{payload}"
+
+    def _build_prompt(self, description: str, image_size: Tuple[int, int]) -> str:
+        width, height = image_size
+        return f"""
+你是一个桌面 GUI 元素定位器。请在图片中定位用户目标，并只返回严格 JSON，不要 Markdown，不要解释。
+
+目标：{description}
+图片尺寸：width={width}, height={height}
+
+返回格式：
+{{
+  "success": true,
+  "x": 0,
+  "y": 0,
+  "width": 0,
+  "height": 0,
+  "confidence": 0.0,
+  "reasoning": "一句话说明定位依据"
+}}
+
+要求：
+- x/y/width/height 必须是原图像素坐标，不要归一化。
+- bbox 应包住可点击目标本体，不要返回整屏或整块窗口。
+- 如果无法确定目标，返回 {{"success": false, "reasoning": "原因"}}。
+""".strip()
+
+    def _extract_response_text(self, response) -> str:
+        output_text = getattr(response, "output_text", None)
+        if output_text:
+            return output_text
+
+        chunks = []
+        for item in getattr(response, "output", []) or []:
+            if getattr(item, "type", None) != "message":
+                continue
+            for content in getattr(item, "content", []) or []:
+                text = getattr(content, "text", None)
+                if text:
+                    chunks.append(text)
+        return "\n".join(chunks)
+
+    def _parse_response_text(self, text: str) -> LocatorResult:
+        try:
+            data = json.loads(self._extract_json_object(text))
+        except Exception as e:
+            return LocatorResult(
+                success=False,
+                error=f"failed to parse vision JSON: {e}",
+                source=self.SOURCE,
+            )
+
+        if not data.get("success", False):
+            return LocatorResult(
+                success=False,
+                error=str(data.get("reasoning") or data.get("error") or "target not found"),
+                source=self.SOURCE,
+            )
+
+        try:
+            x = int(round(float(data["x"])))
+            y = int(round(float(data["y"])))
+            width = int(round(float(data["width"])))
+            height = int(round(float(data["height"])))
+        except (KeyError, TypeError, ValueError) as e:
+            return LocatorResult(
+                success=False,
+                error=f"invalid vision bbox: {e}",
+                source=self.SOURCE,
+            )
+
+        if width <= 0 or height <= 0:
+            return LocatorResult(
+                success=False,
+                error="invalid vision bbox: width/height must be positive",
+                source=self.SOURCE,
+            )
+
+        confidence = float(data.get("confidence", 0.5))
+        return LocatorResult(
+            success=True,
+            x=x,
+            y=y,
+            width=width,
+            height=height,
+            confidence=max(0.0, min(1.0, confidence)),
+            source=self.SOURCE,
+        )
+
+    def _extract_json_object(self, text: str) -> str:
+        if not text:
+            raise ValueError("empty response text")
+        fenced = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", text, re.DOTALL)
+        if fenced:
+            return fenced.group(1)
+        start = text.find("{")
+        end = text.rfind("}")
+        if start == -1 or end == -1 or end < start:
+            raise ValueError("no JSON object found")
+        return text[start:end + 1]
+
+
 class AILocator(BaseLocator):
     """
     AI 视觉定位器（兜底方案）
@@ -656,8 +886,9 @@ class SmartLocator:
             AccessibilityLocator(),  # 1. 首选
             OcrLocator(),            # 2. 文字定位
             ColorLocator(),          # 3. 颜色定位
-            FallbackLocator(),       # 4. 坐标估算兜底
-            AILocator(),             # 5. AI 兜底
+            VisionLocator(),          # 4. 云端多模态定位
+            FallbackLocator(),       # 5. 坐标估算兜底
+            AILocator(),             # 6. AI 兜底
         ]
         self.screen_size = self._get_screen_size()
 
@@ -685,7 +916,7 @@ class SmartLocator:
 
         # 按优先级尝试
         for locator in self.locators:
-            if prefer_source and locator.__class__.__name__.lower() != prefer_source.lower():
+            if prefer_source and self._source_name(locator) != prefer_source.lower():
                 continue
 
             # 检查是否能处理
@@ -705,6 +936,13 @@ class SmartLocator:
             error=f"所有定位方式都失败：{description}",
             source="all"
         )
+
+    def _source_name(self, locator: BaseLocator) -> str:
+        source = getattr(locator, "SOURCE", None)
+        if source:
+            return source.lower()
+        class_name = locator.__class__.__name__.lower()
+        return class_name.removesuffix("locator")
 
     def locate_with_ai_verify(self, description: str,
                                max_attempts: int = 3) -> LocatorResult:
@@ -736,7 +974,7 @@ def main():
 
     parser = argparse.ArgumentParser(description="目标定位器")
     parser.add_argument("description", help="目标描述，如'发送按钮'、'苦尘'")
-    parser.add_argument("--prefer", choices=["accessibility", "ocr", "color", "ai"],
+    parser.add_argument("--prefer", choices=["accessibility", "ocr", "color", "vision", "ai"],
                         help="优先使用的定位方式")
 
     args = parser.parse_args()
