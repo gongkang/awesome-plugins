@@ -1,18 +1,6 @@
 ---
 name: screen-monitor
-description: |
-  屏幕监控 - 持续感知屏幕变化，自动检测异常或指定事件。
-
-  【何时触发此技能】
-  当用户的请求涉及以下任一情况时，触发此技能：
-
-  - **持续监控**："帮我盯着这个页面"、"监控屏幕变化"
-  - **异常检测**："有弹窗就告诉我"、"出错时通知我"
-  - **条件触发**："股价涨到 100 告诉我"、"看到 XX 就..."
-  - **操作录制**："帮我录制这个操作过程"、"记录我做了什么"
-  - **定时截图**："每分钟截个图"、"定期保存屏幕状态"
-
-  与 screen-control 的区别：监控是"看着"，控制是"操作"。
+description: 'Use when the user asks to continuously watch the screen or a GUI state over time: monitor changes, detect popups/errors, wait for specific text or visual conditions, take periodic screenshots, or record an operation sequence. Prefer screen-control for one-off GUI actions like clicking, typing, opening apps, or switching windows.'
 ---
 
 # 屏幕监控技能
