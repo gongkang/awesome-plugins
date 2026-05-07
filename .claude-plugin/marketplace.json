@@ -20,8 +20,7 @@
       "license": "MIT",
       "keywords": ["code", "development"],
       "category": "development",
-      "tags": ["code", "productivity"],
-      "strict": false
+      "tags": ["code", "productivity"]
     },
     {
       "name": "claw-plugin",
@@ -36,8 +35,7 @@
       "license": "MIT",
       "keywords": ["claw", "nanoclaw"],
       "category": "productivity",
-      "tags": ["claw", "automation"],
-      "strict": false
+      "tags": ["claw", "automation"]
     }
   ]
 }

@@ -1,0 +1,32 @@
+{
+  "name": "awesome-plugins",
+  "interface": {
+    "displayName": "Awesome Plugins"
+  },
+  "plugins": [
+    {
+      "name": "code-plugin",
+      "source": {
+        "source": "local",
+        "path": "./plugins/code-plugin"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Development"
+    },
+    {
+      "name": "claw-plugin",
+      "source": {
+        "source": "local",
+        "path": "./plugins/claw-plugin"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

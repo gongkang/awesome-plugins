@@ -1,0 +1,21 @@
+{
+  "name": "claw-plugin",
+  "version": "1.0.0",
+  "description": "NanoClaw 插件",
+  "author": {
+    "name": "gongkang"
+  },
+  "homepage": "https://github.com/gongkang/awesome-plugins",
+  "repository": "https://github.com/gongkang/awesome-plugins",
+  "license": "MIT",
+  "keywords": ["claw", "nanoclaw", "automation", "ai-dialog-search"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Claw Plugin",
+    "shortDescription": "NanoClaw 自动化与 AI 对话搜索技能",
+    "longDescription": "提供屏幕监控、屏幕控制和多 AI 对话搜索等 NanoClaw 相关 Codex 技能。",
+    "developerName": "gongkang",
+    "category": "Productivity",
+    "capabilities": ["Read", "Write"]
+  }
+}
