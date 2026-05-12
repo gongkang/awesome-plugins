@@ -1,250 +1,172 @@
 ---
 name: api-e2e-test
-description: 为接口生成基于 Markdown 用例文档的 E2E 测试。当用户要求"写接口 E2E 测试"、"生成接口自动化测试"、"创建接口端到端测试"时使用此技能。用例以 Markdown 为唯一管理入口，配套可执行脚本，通过真实服务启动、发起 HTTP 请求验证响应。
+description: Use when 用户要求为接口编写、生成或维护 E2E/API 自动化测试，或要求基于接口文档补齐真实 HTTP 场景、测试数据依赖、跳过原因和执行流程记录。
 origin: Custom
 ---
 
 # API E2E 测试生成器
 
-为接口生成 E2E 测试。用例以 Markdown 文档为唯一管理入口，配套可执行 Python 脚本，通过真实服务启动、发起 HTTP 请求验证响应。
+为接口生成 E2E 测试。核心原则：先打包并外部启动真实服务，再由测试程序通过 HTTP 黑盒请求验证接口；服务生命周期和场景断言必须分离。
 
 ## 何时使用
 
-用户要求写接口 E2E 测试 / 生成接口自动化测试 / 创建接口端到端测试时使用。
+用户要求写接口 E2E 测试、生成接口自动化测试、创建端到端测试、补齐 E2E 场景、维护 E2E 脚本、记录 E2E 测试数据或处理 E2E 跳过原因时使用。
+
+## 硬约束
+
+- 测试程序只负责 HTTP 请求、断言和结果输出，不负责启动、停止或托管服务进程。
+- 必须请求真实 HTTP 端口，例如 `http://127.0.0.1:{port}`；禁止把框架内存客户端、Mock、进程内 MVC 作为主要验证路径。
+- Java 项目必须优先用 Java 实现 E2E 测试程序；不要为 Java 项目生成 Python、Shell 场景测试脚本。
+- Java/Spring Boot 项目默认使用轻量 Java `main` 程序通过 HTTP 调用服务；不要默认生成 JUnit、`SpringBootTest`、`MockMvc`、随机端口或 Maven test lifecycle 绑定的 E2E。
+- 服务打包、启动、等待健康检查和停止流程写在 `tests/e2e/README.md`；不要默认新增专门的启动脚本。
+- 测试场景按接口或接口族合并；不要把同一接口族拆成过多零散文件。
+- `tests/e2e/scripts/` 必须包含与 `tests/e2e/cases/` 场景文档一一对应的测试程序。
+- 命名必须能看出覆盖的接口或端点；禁止使用 `smoke`，避免 `service_health` 这类仍不清楚端点的泛化名字。示例：`ApiHealthAndRootE2e`、`SearchE2e`、`StrategySearchE2e`。
+- 测试程序不得导入应用模块、mock 内部对象、启动 mock 运行时或 monkeypatch 应用对象。
 
 ## 核心工作流
 
 ```
-1. 检查接口实现文档 → 2. 按需生成接口文档 → 3. 确定服务启动方式 → 4. 创建目录结构 → 5. 并行子代理生成用例和脚本 → 6. 生成聚合入口 → 7. 验证可运行性
+1. 检查接口实现文档
+2. 必要时生成接口文档
+3. 探索打包命令、启动命令、端口、健康检查和依赖
+4. 设计按接口合并的 Markdown 场景文档
+5. 生成与场景文档一一对应的测试程序
+6. 在 README 记录打包、外部启动、等待健康检查、运行测试和停止服务的流程
+7. 外部启动真实服务，用测试程序发 HTTP 请求验证
+8. 记录跳过原因、环境依赖、造数流程和验证结果
 ```
 
-### 步骤 1: 检查接口实现文档
+## 步骤 1：检查接口实现文档
 
-检查 `docs/interfaces/` 目录是否存在且有 `.md` 文件：
+检查 `docs/interfaces/` 是否存在接口实现文档：
 
 ```bash
 ls docs/interfaces/*.md 2>/dev/null
 ```
 
-**如果目录不存在或为空**：先调用 `api-doc-generator` 技能生成接口实现文档，再继续后续步骤。
+如果目录不存在或为空，先使用 `api-doc-generator` 生成接口实现文档，再继续。
 
-### 步骤 2: 阅读接口实现文档
+## 步骤 2：提取测试场景
 
-阅读 `docs/interfaces/` 下的接口实现文档，从中提取测试场景：
+从接口文档中提取场景：
 
-| 接口文档维度 | 对应的测试场景 |
+| 文档信息 | E2E 场景 |
 | --- | --- |
-| 核心流程图 | 正常流程、各分支路径 |
+| 核心流程图 | 正常路径、分支路径 |
 | 关键过滤与业务规则 | 参数校验、归一化、边界条件 |
-| 候选源与调用链 | 各数据源的命中/未命中/降级 |
-| 返回策略与降级 | 成功响应、异常响应、降级路径 |
-| 已知风险与疑点 | 边界情况、类型不匹配、兼容路由 |
+| 候选源与调用链 | 各数据源命中、未命中、降级 |
+| 返回策略与降级 | 成功响应、异常响应、兜底响应 |
+| 已知风险与疑点 | 类型兼容、历史路由、缓存、环境依赖 |
 
-### 步骤 2.5: 探索项目启动方式
+场景名称必须使用中文描述。保留 `MANUAL`、`STATISTICS`、`MODEL`、`request_time` 等接口枚举和字段名。
 
-**不同项目启动方式差异很大，必须主动探索项目结构来确定。**
+## 步骤 3：探索服务启动与测试环境
 
-探索步骤：
+必须先探索项目，不要套模板：
 
-1. **找启动入口**：检查项目根目录，寻找以下特征
-   - `run.sh`、`start.sh`、`Makefile`、`docker-compose.yml` 等脚本
-   - `main.py`、`app.py`、`server.js`、`main.go`、`Cargo.toml`、`pom.xml`、`build.gradle` 等入口文件
-   - `package.json` 中的 `scripts.start` 字段
+- 打包入口：`pom.xml`、`build.gradle`、`package.json`、`Makefile`、Dockerfile 等。
+- 启动入口：可执行 jar/war、`run.sh`、`start.sh`、`docker-compose.yml`、`main.py`、`server.js`、`main.go` 等。
+- 端口：查 `server.port`、`PORT`、`listen`、`addr`、`bind` 或配置文件。
+- 健康检查：查 `/health`、`/ping`、`/slb/health`、`/` 等真实路由。
+- 依赖：JDK/Maven/Gradle、npm、Go module、模型文件、缓存、Apollo/Redis/上游数据等。
 
-2. **确认端口**：在入口文件或配置文件中查找端口定义
-   - 常见变量名：`PORT`、`port`、`listen`、`addr`、`bind`
-   - 常见默认值：`8000`、`8080`、`3000`、`5000`、`9090`
+把确认结果写入 `tests/e2e/README.md`：打包命令、启动命令、Base URL、健康检查路径、环境依赖、测试数据准备方式。
 
-3. **确认健康检查路径**：查找路由定义或文档中是否有 `/health`、`/ping`、`/` 等路径
+## 步骤 4：选择执行方式
 
-4. **确认依赖安装方式**：`pip install`、`npm install`、`go mod download`、`mvn install` 等
+硬约束是“真实服务 + HTTP 黑盒请求”。优先使用项目语言和工具链：
 
-**将确认的启动命令、端口、健康检查路径、依赖安装命令记录下来**。如果无法确定，先尝试 `python main.py` 或 `bash run.sh`，失败时尝试其他方式。
+| 技术栈 | 推荐方式 |
+| --- | --- |
+| Java / Spring Boot | Java `main` E2E 程序 + `HttpURLConnection` 或可用的 Java HTTP client，请求外部启动的真实服务 |
+| Node.js | 项目已有 test runner 或 Node 脚本 + `fetch`/`axios` 请求真实服务 |
+| Go | `go test` 或 Go `main` 程序 + `net/http` 请求真实服务 |
+| Python | pytest/httpx/requests，或项目已有脚本方式 |
+| 无测试栈或脚本型项目 | 生成与项目工具链一致的轻量 HTTP runner |
 
-### 步骤 3: 创建目录结构
+只有用户明确要求，或项目已有稳定约定时，才把 E2E 放入 JUnit、pytest、go test 等测试框架生命周期。否则保持“外部启动服务 + 独立 HTTP 测试程序”的流程。
 
+## Java / Maven 推荐流程
+
+对 Java Maven 服务，README 中优先记录以下流程。具体系统参数、artifact 路径和端口必须按项目实际结果填写。
+
+1. 打包服务：
+
+```bash
+mvn clean package -DskipTests
 ```
+
+2. 在单独 shell 或外层流程中启动打包产物：
+
+```bash
+java {system-properties} -jar {module}/target/{artifact}.jar
+```
+
+或：
+
+```bash
+java {system-properties} -jar {module}/target/{artifact}.war
+```
+
+3. 等待健康检查：
+
+```bash
+curl -i http://127.0.0.1:{port}/{health-path}
+```
+
+4. 编译并运行 Java E2E 程序：
+
+```bash
+mkdir -p /tmp/{project}-e2e-classes
+javac -encoding UTF-8 -d /tmp/{project}-e2e-classes tests/e2e/scripts/*.java
+java -cp /tmp/{project}-e2e-classes {InterfaceName}E2e --base-url http://127.0.0.1:{port}
+```
+
+可以在 README 里提供后台启动和清理的 shell 片段，但不要把它抽成默认启动脚本。
+
+## 步骤 5：目录、命名与脚本结构
+
+默认结构：
+
+```text
 tests/e2e/
+  README.md
   cases/
-    smoke.md                  # 冒烟用例（健康检查、根路径等）
-    {interface_1}.md          # 接口 1 用例
-    {interface_2}.md          # 接口 2 用例
+    api_health_and_root.md
+    {interface_or_api_group}.md
   scripts/
-    smoke.py                  # 冒烟用例执行脚本
-    {interface_1}.py          # 接口 1 用例执行脚本
-    {interface_2}.py          # 接口 2 用例执行脚本
-    run_all_e2e.py            # 聚合入口，导入并运行所有用例
-  __init__.py
+    ApiHealthAndRootE2e.java
+    {InterfaceOrApiGroup}E2e.java
+    E2eSupport.java
 ```
 
-### 步骤 4: 并行子代理生成用例和脚本
+约束：
 
-**核心步骤。** 对每个接口（含 smoke），启动一个子代理并行生成 Markdown 用例文档和对应的 Python 执行脚本。
+- 一个场景文档对应一个测试程序。
+- 按接口或接口族合并场景，例如 `search.md` 对应 `SearchE2e.java`，`strategy_search.md` 对应 `StrategySearchE2e.java`。
+- 文档和程序名必须表达接口或端点；`ApiHealthAndRootE2e` 比 `SmokeE2e` 或 `ServiceHealthE2e` 更清楚。
+- Java 项目可以保留一个共享 `E2eSupport.java`，仅放 HTTP、断言、Base URL、结果输出等通用逻辑，不放服务启动/停止逻辑。
+- 全量执行可先写在 README 的 shell loop 中；不要默认新增 `run_all_e2e.sh`、`start_service.sh`、`run_httpserver_e2e.*`。
+- 如果用户明确要求全量入口，Java 项目优先生成 `RunAllE2e.java`，不要生成 shell 场景测试脚本。
 
-使用 `Agent` 工具一次性启动所有子代理（`run_in_background: true`），不串行等待。
+## 步骤 6：服务启动与测试执行分离
 
-#### 子代理 prompt 模板
+测试程序不得托管启动服务。不要在测试 runner 中实现 `start_service`、`stop_service`、`--no-start`、`--ready-timeout` 这类服务生命周期分支。
 
-```
-为以下接口生成 E2E 测试用例和脚本：
+正确流程：
 
-**接口文档**: docs/interfaces/{文件名}.md
-**用例文档输出路径**: tests/e2e/cases/{文件名}.md
-**脚本输出路径**: tests/e2e/scripts/{文件名}.py
+1. 用独立 shell/子进程启动真实服务，确保日志可见。
+2. 等健康检查通过。
+3. 另一个命令运行 E2E 测试程序。
+4. 测试结束后由操作者、外层 shell 或 CI 步骤停止服务。
 
-**环境信息**:
-- 服务启动命令: {启动命令}
-- Base URL: http://127.0.0.1:{端口}
-- 健康检查路径: {健康检查路径}
+CI 也应把“启动服务”和“执行 E2E”拆成不同步骤。
 
-**要求**:
-1. 阅读接口文档，根据流程图、业务规则、返回策略、已知风险设计测试用例
-2. 先编写 Markdown 用例文档，格式参照下方"Markdown 用例格式"
-3. 再编写 Python 执行脚本，格式参照下方"Python 脚本格式"
-4. 用例需覆盖：正常路径、参数校验、边界条件、降级路径、文档中标注的风险点
-5. Python 脚本的 CASES 列表必须与 Markdown 用例一一对应
-6. 脚本应自包含，包含启动服务、发送请求、断言、停止服务的完整逻辑
-
-**Markdown 用例格式**:
-# {接口名称} E2E Cases
-
-## Source Interface Document
-- `docs/interfaces/{文件名}.md`
-本用例集遵循源文档中的流程图、关键业务规则、返回策略和已知风险。
-
-## Runtime
-- 启动: {启动命令}
-- Base URL: http://127.0.0.1:{端口}
-
-## Case: {场景名称}
-**Purpose:** 该用例验证的端到端行为。
-**Preconditions:** 所需的测试数据或配置。
-**Request:**
-```http
-POST /{路由路径}
-Content-Type: application/json
-```
-```json
-{ "key": "value" }
-```
-**Expected Response:**
-```json
-{ "code": 0, "message": "success" }
-```
-**Assertions:**
-- HTTP 状态码为 `200`。
-- `code` 为 `0`。
-**Manual Postman Notes:**
-- 粘贴请求 JSON 作为 raw JSON。
-- 记录响应体和耗时。
-
-**Python 脚本格式**:
-每个脚本应自包含，包含以下能力：
-- 启动服务（通过项目的启动命令）
-- 等待服务就绪（轮询健康检查）
-- 发送 HTTP 请求并验证响应
-- 打印用例执行结果（[PASS]/[FAIL]）
-- 停止服务
-- 支持 --case、--list-cases、--no-start 等 CLI 参数
-```
-
-对于 smoke 用例，子代理 prompt 简化为：
-
-```
-生成冒烟测试用例和脚本：
-
-**用例文档输出路径**: tests/e2e/cases/smoke.md
-**脚本输出路径**: tests/e2e/scripts/smoke.py
-
-**环境信息**:
-- 服务启动命令: {启动命令}
-- Base URL: http://127.0.0.1:{端口}
-- 健康检查路径: {健康检查路径}
-
-**smoke 测试应覆盖**:
-- 服务健康检查接口
-- 服务是否能正常启动并响应
-- 基本的路径是否存在（404 响应也是有效响应）
-
-[插入上面的 Markdown 用例格式和 Python 脚本格式模板]
-```
-
-#### 错误处理
-
-- 如果某个子代理失败（如接口文档不存在），在日志中标记该接口测试生成失败，继续处理其他接口
-- 所有子代理完成后，汇总成功/失败数量并报告给用户
-
-### 步骤 5: 生成聚合入口
-
-等待所有子代理完成后，主进程生成 `tests/e2e/scripts/run_all_e2e.py`，导入所有已生成的 per-document CASES 并执行。
-
-#### 聚合入口格式
-
-```python
-"""聚合入口：运行所有 E2E 用例。"""
-import subprocess
-import sys
-import importlib
-
-# 动态导入所有用例脚本
-MODULES = ["smoke", "interface_1", "interface_2"]  # 按实际生成的文件名修改
-
-def main():
-    failed = 0
-    for mod_name in MODULES:
-        mod = importlib.import_module(mod_name)
-        if hasattr(mod, "main"):
-            result = subprocess.run(
-                [sys.executable, f"{mod_name}.py"] + sys.argv[1:],
-                capture_output=False,
-            )
-            if result.returncode != 0:
-                failed += 1
-    if failed > 0:
-        print(f"\n{failed} 个用例脚本执行失败")
-        sys.exit(1)
-    print("\n所有 E2E 用例通过")
-
-if __name__ == "__main__":
-    main()
-```
-
-### 步骤 6: 验证可运行性
-
-生成完成后，执行基本验证：
-
-1. 检查所有生成的 Python 脚本语法是否正确：
-   ```bash
-   python -m py_compile tests/e2e/scripts/smoke.py
-   # 对其他脚本重复
-   ```
-
-2. 检查 `run_all_e2e.py` 中的 MODULES 列表是否与已生成的文件匹配
-
-3. 检查 Markdown 用例和 Python CASES 列表数量是否一致
-
-## 架构约束
-
-E2E 测试必须：
-
-- 通过项目的服务启动入口启动真实服务（如 `python main.py`、`go run cmd/main.go`、`java -jar app.jar` 等）
-- 等待服务就绪（如健康检查返回成功）
-- 向 `127.0.0.1:{PORT}` 发送真实 HTTP 请求
-- 打印每个用例的请求、响应、状态码、耗时
-- 失败时退出非零状态码
-- 测试完成后停止服务
-
-E2E 测试不得：
-
-- 导入应用模块并 mock 内部对象
-- 使用框架内置的测试客户端作为主要机制
-- 启动 mock 运行时
-- 在进程内 monkeypatch Python 对象
-
-## Markdown 用例格式
+## 步骤 7：Markdown 用例格式
 
 ````markdown
-# {接口名称} E2E Cases
+# {接口或端点组} E2E 用例
 
 ## Source Interface Document
 
@@ -254,17 +176,24 @@ E2E 测试不得：
 
 ## Runtime
 
-- 启动: `bash app/run.sh`
-- Base URL: `http://127.0.0.1:{端口}`
-- 配置来源: 根据环境变量决定
+- Prerequisite: start the service externally before running these cases.
+- Startup example: `{启动命令}`
+- Base URL: `http://127.0.0.1:{port}`
+- Test program: `tests/e2e/scripts/{InterfaceName}E2e.java`
 
-## Case: {场景名称}
+## Covered Endpoints
+
+- `GET /example`
+- `POST /api/example`
+
+<a id="case-stable-anchor"></a>
+
+## 场景：{中文场景描述}
 
 **Purpose:** 该用例验证的端到端行为。
 
 **Preconditions:**
-- 所需的上游测试数据或配置。
-- 所需的模型/缓存/向量行为。
+- 所需的上游测试数据、模型、缓存或配置。
 
 **Request:**
 
@@ -279,182 +208,64 @@ Content-Type: application/json
 }
 ```
 
-**Expected Response:**
-
-```json
-{
-  "code": 0,
-  "message": "success"
-}
-```
-
 **Assertions:**
-- HTTP 状态码为 `200`。
-- `code` 为 `0`。
-- ...
-
-**Manual Postman Notes:**
-- 粘贴请求 JSON 作为 raw JSON。
-- 记录响应体和耗时。
+- 请求必须经过真实 HTTP 端口。
+- HTTP 状态码符合预期。
+- 关键响应字段符合预期。
+- 测试日志输出状态码、响应体或关键字段和耗时。
 ````
 
-## Python 脚本格式
+如果脚本中的 `docs` 使用英文 anchor，Markdown 标题前补显式 `<a id="..."></a>`，避免中文标题导致链接不可控。
 
-每个 Python 脚本应自包含，包含以下核心能力。脚本通过 `subprocess` 调用项目对应的启动命令，使用 `requests` 库发送 HTTP 请求。
+## 步骤 8：README 记录规范
 
-```python
-"""{接口名称} E2E 测试脚本。"""
-import subprocess
-import sys
-import time
-import argparse
-import requests
-from typing import Optional
+`tests/e2e/README.md` 是 E2E 问题与操作记录入口，必须记录：
 
-# === 配置（由生成时填充） ===
-SERVICE_CMD = "bash app/run.sh"
-BASE_URL = "http://127.0.0.1:8000"
-HEALTH_PATH = "/health"
-READY_TIMEOUT = 30
+- 执行入口：如何打包服务、如何外部启动服务、如何等待健康检查、如何运行单个场景、如何运行全部场景、如何停止服务。
+- 场景映射：每个 Markdown 场景文档、对应测试程序、覆盖端点。
+- 环境依赖：JDK/Maven/Gradle、模型、缓存、上游服务、权限、登录、测试环境地址。
+- 测试数据：固定 query、后台入口、造数步骤、删除/清理方式。
+- 跳过原因：对应场景、`skip_reason`、解除跳过的条件。
+- 问题记录：登录/权限/测试环境问题和处理方式。
 
-CASES: list[dict] = [
-    {
-        "name": "场景名称",
-        "docs": "tests/e2e/cases/xxx.md#case-场景名称",
-        "method": "GET",
-        "path": "/路由",
-        "json": {"key": "value"},
-        "expect": {
-            "status": 200,
-            "json_contains": {"code": 0},
-            "json_has_keys": ["code", "message"],
-        },
-    },
-]
+遇到测试环境问题时，先把问题和处理方式写入 README，再继续。
 
-# === 运行时函数 ===
+## 步骤 9：Java E2E 程序要求
 
-def start_service() -> subprocess.Popen:
-    proc = subprocess.Popen(SERVICE_CMD.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    return proc
+Java 轻量 E2E 程序应满足：
 
-def stop_service(proc: subprocess.Popen) -> None:
-    proc.terminate()
-    try:
-        proc.wait(timeout=10)
-    except subprocess.TimeoutExpired:
-        proc.kill()
-        proc.wait()
+- 每个程序有独立 `public static void main(String[] args)`。
+- 支持 `--base-url URL`，并可从 `BASE_URL` 读取默认值。
+- 支持 `--help` 输出用法。
+- 使用 `HttpURLConnection` 或当前 JDK 可用的标准 HTTP client。
+- 打印每个用例的 `[PASS]`、`[FAIL]`、`[SKIP]`、case id、请求方法、路径、HTTP 状态码、耗时、响应体或关键字段。
+- 失败时退出非零状态码。
+- 对数据缺失但已确认暂不可造的场景使用 skip，并在 README 记录原因和解除条件。
 
-def wait_ready(proc: subprocess.Popen, timeout: int = READY_TIMEOUT) -> bool:
-    url = f"{BASE_URL}{HEALTH_PATH}"
-    deadline = time.time() + timeout
-    while time.time() < deadline:
-        if proc.poll() is not None:
-            return False
-        try:
-            r = requests.get(url, timeout=2)
-            if r.status_code == 200:
-                return True
-        except requests.ConnectionError:
-            pass
-        time.sleep(0.5)
-    return False
+`--list-cases`、`--case` 过滤是可选能力；只有生成集合入口或用户明确要求筛选能力时才必须实现。
 
-def send_request(method: str, path: str, payload: Optional[dict] = None) -> tuple:
-    url = f"{BASE_URL}{path}"
-    t0 = time.time()
-    r = requests.request(method, url, json=payload, timeout=30)
-    return r.status_code, r.text, (time.time() - t0) * 1000
+## 步骤 10：验证
 
-def run_case(case: dict) -> bool:
-    name, method, path = case["name"], case.get("method", "GET"), case["path"]
-    expect = case.get("expect", {})
-    status, body, elapsed = send_request(method, path, case.get("json"))
-    passed = True
-    if expect.get("status") and status != expect["status"]:
-        passed = False
-    if expect.get("json_contains"):
-        import json
-        try:
-            resp = json.loads(body)
-            for k, v in expect["json_contains"].items():
-                if resp.get(k) != v:
-                    passed = False
-        except json.JSONDecodeError:
-            passed = False
-    if expect.get("json_has_keys"):
-        import json
-        try:
-            resp = json.loads(body)
-            for k in expect["json_has_keys"]:
-                if k not in resp:
-                    passed = False
-        except json.JSONDecodeError:
-            passed = False
-    tag = "[PASS]" if passed else "[FAIL]"
-    print(f"{tag} {name} | {method} {path} | {status} | {elapsed:.0f}ms")
-    if not passed:
-        print(f"    Response: {body[:300]}")
-    return passed
+生成或修改后必须验证：
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--case", help="只运行指定用例")
-    parser.add_argument("--list-cases", action="store_true")
-    parser.add_argument("--no-start", action="store_true", help="不自动启动服务")
-    args = parser.parse_args()
+1. 语法/编译：
+   - Java 轻量程序：`javac -encoding UTF-8 -d /tmp/{project}-e2e-classes tests/e2e/scripts/*.java`
+   - Java 框架内集成测试：仅在用户明确要求时使用 `mvn -pl {module} -DskipTests test-compile`
+   - Python：`python -m py_compile tests/e2e/scripts/*.py`
+   - Node：项目 lint/typecheck 或 test runner 的 list/collect 命令
+   - Go：`go test ./... -run TestName -count=0`
+2. 陈旧引用检查：
 
-    cases = [c for c in CASES if not args.case or c["name"] == args.case]
-    if args.list_cases:
-        for c in CASES:
-            print(c["name"])
-        return
-
-    service_proc = None
-    if not args.no_start:
-        service_proc = start_service()
-        if not wait_ready(service_proc):
-            print("[E2E] 服务启动失败"); sys.exit(1)
-
-    results = [run_case(c) for c in cases]
-    if service_proc:
-        stop_service(service_proc)
-
-    passed, failed = sum(results), len(results) - sum(results)
-    print(f"\nSummary: {passed} passed, {failed} failed")
-    if failed:
-        sys.exit(1)
-
-if __name__ == "__main__":
-    main()
+```bash
+rg -n "smoke|Smoke|SpringBootTest|MockMvc|randomPort|JUnit|start_service|run_httpserver" tests/e2e src/test 2>/dev/null
 ```
 
-## 用例覆盖矩阵
+3. 外部启动真实服务后，运行每个场景测试程序并确认退出码。
+4. 记录真实通过、失败、跳过数量。
+5. 测试完成后确认服务由外层流程停止，必要时检查端口没有残留。
 
-| 维度 | 典型用例 |
-| --- | --- |
-| 请求校验 | 空 body、空字段、非法类型 |
-| 参数归一化 | query 转小写、source 别名映射 |
-| 正常路径 | 已知数据精确命中 |
-| 降级路径 | 精确未命中 → 向量 → 模型 |
-| 显式参数 | source 指定、version 路由 |
-| 多源合并 | 多 source 同时请求 |
-| 边界情况 | top_k 截断、isReverse 保留 |
-| 已知风险 | 文档中标注的潜在问题 |
+如果验证需要人工扫码、权限、造数或测试环境修复，停止并说明需要用户处理什么。
 
-## 输出
+## 子代理使用
 
-```
-tests/e2e/
-  cases/
-    smoke.md
-    search_category.md
-    search_first_category.md
-  scripts/
-    smoke.py
-    search_category.py
-    search_first_category.py
-    run_all_e2e.py
-  __init__.py
-```
+只有当用户明确要求“子代理、并行代理、并行处理”时，才把接口拆给子代理。拆分时每个代理只负责一个场景文档和对应测试程序，写入范围必须互不重叠。否则主流程自己完成。
