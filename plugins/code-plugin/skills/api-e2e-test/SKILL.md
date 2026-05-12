@@ -18,9 +18,9 @@ origin: Custom
 - 必须请求真实 HTTP 端口，例如 `http://127.0.0.1:{port}`；禁止把框架内存客户端、Mock、进程内 MVC 作为主要验证路径。
 - Java 项目必须优先用 Java 实现 E2E 测试程序；不要为 Java 项目生成 Python、Shell 场景测试脚本。
 - Java/Spring Boot 项目默认使用轻量 Java `main` 程序通过 HTTP 调用服务；不要默认生成 JUnit、`SpringBootTest`、`MockMvc`、随机端口或 Maven test lifecycle 绑定的 E2E。
-- 服务打包、启动、等待健康检查和停止流程写在 `tests/e2e/README.md`；不要默认新增专门的启动脚本。
+- 服务打包、启动、等待健康检查和停止流程写在 `tests/e2e-api/README.md`；不要默认新增专门的启动脚本。
 - 测试场景按接口或接口族合并；不要把同一接口族拆成过多零散文件。
-- `tests/e2e/scripts/` 必须包含与 `tests/e2e/cases/` 场景文档一一对应的测试程序。
+- `tests/e2e-api/scripts/` 必须包含与 `tests/e2e-api/cases/` 场景文档一一对应的测试程序。
 - 命名必须能看出覆盖的接口或端点；禁止使用 `smoke`，避免 `service_health` 这类仍不清楚端点的泛化名字。示例：`ApiHealthAndRootE2e`、`SearchE2e`、`StrategySearchE2e`。
 - 测试程序不得导入应用模块、mock 内部对象、启动 mock 运行时或 monkeypatch 应用对象。
 
@@ -71,7 +71,7 @@ ls docs/interfaces/*.md 2>/dev/null
 - 健康检查：查 `/health`、`/ping`、`/slb/health`、`/` 等真实路由。
 - 依赖：JDK/Maven/Gradle、npm、Go module、模型文件、缓存、Apollo/Redis/上游数据等。
 
-把确认结果写入 `tests/e2e/README.md`：打包命令、启动命令、Base URL、健康检查路径、环境依赖、测试数据准备方式。
+把确认结果写入 `tests/e2e-api/README.md`：打包命令、启动命令、Base URL、健康检查路径、环境依赖、测试数据准备方式。
 
 ## 步骤 4：选择执行方式
 
@@ -118,9 +118,9 @@ curl -i http://127.0.0.1:{port}/{health-path}
 4. 编译并运行 Java E2E 程序：
 
 ```bash
-mkdir -p /tmp/{project}-e2e-classes
-javac -encoding UTF-8 -d /tmp/{project}-e2e-classes tests/e2e/scripts/*.java
-java -cp /tmp/{project}-e2e-classes {InterfaceName}E2e --base-url http://127.0.0.1:{port}
+mkdir -p /tmp/{project}-e2e-api-classes
+javac -encoding UTF-8 -d /tmp/{project}-e2e-api-classes tests/e2e-api/scripts/*.java
+java -cp /tmp/{project}-e2e-api-classes {InterfaceName}E2e --base-url http://127.0.0.1:{port}
 ```
 
 可以在 README 里提供后台启动和清理的 shell 片段，但不要把它抽成默认启动脚本。
@@ -130,7 +130,7 @@ java -cp /tmp/{project}-e2e-classes {InterfaceName}E2e --base-url http://127.0.0
 默认结构：
 
 ```text
-tests/e2e/
+tests/e2e-api/
   README.md
   cases/
     api_health_and_root.md
@@ -179,7 +179,7 @@ CI 也应把“启动服务”和“执行 E2E”拆成不同步骤。
 - Prerequisite: start the service externally before running these cases.
 - Startup example: `{启动命令}`
 - Base URL: `http://127.0.0.1:{port}`
-- Test program: `tests/e2e/scripts/{InterfaceName}E2e.java`
+- Test program: `tests/e2e-api/scripts/{InterfaceName}E2e.java`
 
 ## Covered Endpoints
 
@@ -219,7 +219,7 @@ Content-Type: application/json
 
 ## 步骤 8：README 记录规范
 
-`tests/e2e/README.md` 是 E2E 问题与操作记录入口，必须记录：
+`tests/e2e-api/README.md` 是 E2E 问题与操作记录入口，必须记录：
 
 - 执行入口：如何打包服务、如何外部启动服务、如何等待健康检查、如何运行单个场景、如何运行全部场景、如何停止服务。
 - 场景映射：每个 Markdown 场景文档、对应测试程序、覆盖端点。
@@ -249,15 +249,15 @@ Java 轻量 E2E 程序应满足：
 生成或修改后必须验证：
 
 1. 语法/编译：
-   - Java 轻量程序：`javac -encoding UTF-8 -d /tmp/{project}-e2e-classes tests/e2e/scripts/*.java`
+   - Java 轻量程序：`javac -encoding UTF-8 -d /tmp/{project}-e2e-api-classes tests/e2e-api/scripts/*.java`
    - Java 框架内集成测试：仅在用户明确要求时使用 `mvn -pl {module} -DskipTests test-compile`
-   - Python：`python -m py_compile tests/e2e/scripts/*.py`
+   - Python：`python -m py_compile tests/e2e-api/scripts/*.py`
    - Node：项目 lint/typecheck 或 test runner 的 list/collect 命令
    - Go：`go test ./... -run TestName -count=0`
 2. 陈旧引用检查：
 
 ```bash
-rg -n "smoke|Smoke|SpringBootTest|MockMvc|randomPort|JUnit|start_service|run_httpserver" tests/e2e src/test 2>/dev/null
+rg -n "smoke|Smoke|SpringBootTest|MockMvc|randomPort|JUnit|start_service|run_httpserver" tests/e2e-api src/test 2>/dev/null
 ```
 
 3. 外部启动真实服务后，运行每个场景测试程序并确认退出码。
