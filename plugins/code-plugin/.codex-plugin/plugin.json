@@ -8,12 +8,12 @@
   "homepage": "https://github.com/gongkang/awesome-plugins",
   "repository": "https://github.com/gongkang/awesome-plugins",
   "license": "MIT",
-  "keywords": ["code", "development", "testing", "health-check"],
+  "keywords": ["code", "development", "testing", "documentation", "wiki", "health-check"],
   "skills": "./skills/",
   "interface": {
     "displayName": "Code Plugin",
-    "shortDescription": "代码测试与项目健康检查技能集合",
-    "longDescription": "提供浏览器自动化测试和项目健康度分析等面向代码项目的 Codex 技能。",
+    "shortDescription": "代码测试、文档生成与项目健康检查技能集合",
+    "longDescription": "提供 API 文档生成、API E2E 测试、浏览器自动化测试、项目 Wiki 生成和项目健康度分析等面向代码项目的 Codex 技能。",
     "developerName": "gongkang",
     "category": "Development",
     "capabilities": ["Read", "Write"]

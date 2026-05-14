@@ -20,7 +20,10 @@ awesome-plugins/
 │   │   ├── .claude-plugin/
 │   │   │   └── plugin.json
 │   │   └── skills/
+│   │       ├── api-doc-generator/
+│   │       ├── api-e2e-test/
 │   │       ├── browser-tester/
+│   │       ├── generate-codebase-wiki/
 │   │       └── project-health-check/
 │   └── claw-plugin/               # NanoClaw 插件
 │       ├── .codex-plugin/
@@ -39,7 +42,7 @@ awesome-plugins/
 
 | 插件 | 描述 | 技能 |
 |------|------|------|
-| `code-plugin` | 代码相关插件集合 | browser-tester, project-health-check |
+| `code-plugin` | 代码相关插件集合 | api-doc-generator, api-e2e-test, browser-tester, generate-codebase-wiki, project-health-check |
 | `claw-plugin` | NanoClaw 插件 | ai-dialog-search, screen-monitor, screen-control |
 
 ## 安装

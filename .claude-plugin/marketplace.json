@@ -18,9 +18,9 @@
       "homepage": "https://github.com/gongkang/awesome-plugins",
       "repository": "https://github.com/gongkang/awesome-plugins",
       "license": "MIT",
-      "keywords": ["code", "development"],
+      "keywords": ["code", "development", "documentation", "wiki"],
       "category": "development",
-      "tags": ["code", "productivity"]
+      "tags": ["code", "documentation", "productivity"]
     },
     {
       "name": "claw-plugin",
