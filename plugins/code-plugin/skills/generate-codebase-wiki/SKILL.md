@@ -1,194 +1,181 @@
 ---
 name: generate-codebase-wiki
-description: Use when 用户要求为代码库生成、覆盖更新或审计源码驱动的项目 Wiki、架构文档、模块文档或 DeepWiki 风格文档。
+description: 当用户要求为代码库生成、覆盖更新、补充或审计源码驱动的项目 Wiki、架构文档、模块文档或 DeepWiki 风格文档时使用此技能。也适用于：用户提到"生成项目文档"、"写架构说明"、"梳理代码库"、"DeepWiki"、"生成 wiki"、"补全文档"、"分析项目结构"等场景。即使没有明确说"Wiki"，只要涉及源码级项目文档生成都应使用此技能。
 ---
 
-# Generate Codebase Wiki
+# 代码库 Wiki 生成
 
-## Overview
+## 概述
 
-Generate source-grounded project documentation in the style of DeepWiki: topic-oriented pages, architecture narrative, precise source citations, diagrams/tables where useful, and a clear distinction between verified facts and inferred design intent. Use a stable wiki spine across projects, then adapt the core implementation deep dives to the repository's own concepts and runtime shape. Do not assume a specific technology stack, architecture style, or prior project's taxonomy.
+基于源码生成 DeepWiki 风格的项目文档：面向主题的页面、架构叙述、精确的源码引用、有用的图表/表格，以及已验证事实与推断设计意图的明确区分。跨项目使用稳定的 Wiki 骨架，然后将核心实现的深度分析适配到仓库自身的概念和运行时形态。不要假设特定的技术栈、架构风格或既往项目的分类法。
 
-## Core Rules
+## 核心规则
 
-- Discover the repository archetype before planning pages. A library, web app, mobile app, compiler, data pipeline, infrastructure repo, plugin system, and monorepo need different taxonomies.
-- Use a two-layer taxonomy: a fixed cross-project top-level structure for orientation, plus project-specific deep dives for the actual core implementation.
-- Document by user-facing concepts, domain workflows, public contracts, runtime boundaries, and subsystem responsibilities; never by dumping the file tree.
-- Treat source files, tests, schemas, migrations, build scripts, configs, manifests, CI, examples, generated contracts, and existing docs as evidence. Do not infer behavior from filenames alone.
-- Put the repository snapshot in the docs: commit hash, branch when available, generation date, and whether the worktree was dirty.
-- Every non-trivial claim must cite source evidence with `path:line`, `path:line-line`, or an exact-commit GitHub permalink when available.
-- Prefer concise uncertainty over false certainty: use `Open question` or `Inference` when the source evidence is incomplete.
-- Link existing docs instead of duplicating them. Summarize only what is needed for navigation and architecture understanding.
-- Keep generated docs maintainable: smaller pages, stable headings, evidence tables, and clear page ownership.
-- Plan from a concept inventory and coverage matrix before writing pages; use them to expose missing subsystems, tests, docs, data flows, integration points, and operational topics.
-- Treat `Core Implementation` as the main adaptive area. Identify the project's central workflows, algorithms, domain rules, state transitions, or orchestration paths and split them into detailed mechanism pages.
-- Run a second-pass `Domain Coverage Audit` after the canonical first draft to find high-value domain concepts that were over-merged into broad pages.
-- Each substantial page should name `Related tests` and `Existing docs`; write `None found` only after searching.
-- For overwrite updates, delete only generated wiki files tracked by `.wiki-manifest.json` unless the user explicitly confirms the output directory is dedicated to generated wiki content.
-- Do not transplant a taxonomy from a previous project. Create a page only when the concept is proven by source evidence and would help a maintainer navigate behavior.
+- 在规划页面前先发现仓库原型。库、Web 应用、移动应用、编译器、数据管道、基础设施仓库、插件系统和单体仓库需要不同的分类体系。
+- 使用两层分类法：固定的跨项目顶层结构用于定位，加上项目特定的深度分析用于实际核心实现。
+- 按用户面向的概念、领域工作流、公共契约、运行时边界和子系统职责来文档化；绝不要转储文件树。
+- 将源文件、测试、模式、迁移、构建脚本、配置、清单、CI、示例、生成的契约和现有文档视为证据。不要仅从文件名推断行为。
+- 在文档中放入仓库快照：提交哈希、可用时的分支、生成日期，以及工作树是否脏。
+- 每个非平凡的声明必须用 `path:line`、`path:line-line` 或可用时的精确提交 GitHub 永久链接引用源码证据。
+- 偏好简洁的不确定性胜过虚假的确定性：当源码证据不完整时使用 `待确认` 或 `推断`。
+- 链接现有文档而不是复制它们。仅总结导航和架构理解所需的内容。
+- 保持生成的文档可维护：更小的页面、稳定的标题、证据表和清晰的页面归属。
+- 在写页面前从概念清单和覆盖矩阵规划；用它们暴露缺失的子系统、测试、文档、数据流、集成点和运维主题。
+- 将 `核心实现` 视为主要的适配区域。识别项目的中心工作流、算法、领域规则、状态转换或编排路径，并将它们拆分为详细的机制页面。
+- 在规范初稿后运行第二轮 `领域覆盖审计`，找出被过度合并到宽泛页面中的高价值领域概念。
+- 每个实质性页面应命名 `相关测试` 和 `现有文档`；仅在搜索后才写 `未找到`。
+- 对于覆盖更新，仅删除 `.wiki-manifest.json` 跟踪的生成 Wiki 文件，除非用户明确确认输出目录专用于生成的 Wiki 内容。
+- 不要从既往项目移植分类法。仅当概念被源码证据证实且能帮助维护者导航行为时才创建页面。
 
-## Canonical Wiki Structure
+## 规范 Wiki 结构
 
-Use this as the default output shape. Keep the top-level module order and names stable across projects so generated wikis are comparable. Project-specific vocabulary belongs in page subtitles, tables, diagrams, and child pages, not in renamed top-level modules.
+使用此作为默认输出形态。跨项目保持顶层模块顺序和名称稳定，以便生成的 Wiki 可比较。项目特定词汇属于页面副标题、表格、图表和子页面，而不是重命名的顶层模块。
 
-Required root files:
+必需的根文件：
 
-- `README.md` - Overview and Repository Map: snapshot, reading path, architecture summary, coverage summary.
-- `coverage-matrix.md` - canonical module and domain concept coverage, split recommendations, evidence, and priority.
-- `source-map.md` - source-to-topic navigation, including every generated domain subpage.
-- `glossary.md` - project terms and public concepts.
-- `.wiki-manifest.json` - generated file manifest for safe overwrite updates.
+- `README.md` - 概览与仓库地图：快照、阅读路径、架构摘要、覆盖摘要。
+- `coverage-matrix.md` - 规范模块和领域概念覆盖、拆分建议、证据和优先级。
+- `source-map.md` - 源码到主题的导航，包含每个生成的领域子页面。
+- `glossary.md` - 项目术语和公共概念。
+- `.wiki-manifest.json` - 生成的文件清单，用于安全的覆盖更新。
 
-Canonical top-level modules:
+规范顶层模块：
 
-1. `01-system-architecture/README.md` - major components, package/process boundaries, dependency direction, ownership of responsibilities.
-2. `02-entrypoints-runtime/README.md` - how the system starts, receives input, executes work, shuts down, or is embedded.
-3. `03-core-implementation/README.md` - the project-specific heart: main workflows, algorithms, domain logic, state machines, orchestration, rendering, compilation, scheduling, synchronization, or protocol handling.
-4. `04-interfaces-integrations/README.md` - public APIs, CLI/UI surfaces, plugin contracts, network protocols, external services, import/export formats.
-5. `05-data-state-persistence/README.md` - schemas, storage, caches, in-memory state, migrations, serialization, result/state models.
-6. `06-configuration-extension-security/README.md` - config loading, feature flags, auth/permissions, trust boundaries, extension hooks.
-7. `07-operations-observability/README.md` - logging, metrics, tracing, diagnostics, deployment/runtime operations, failure recovery.
-8. `08-testing-build-release/README.md` - test strategy, CI, packaging, compatibility, release automation.
+1. `01-system-architecture/README.md` - 主要组件、包/进程边界、依赖方向、职责归属。
+2. `02-entrypoints-runtime/README.md` - 系统如何启动、接收输入、执行工作、关闭或被嵌入。
+3. `03-core-implementation/README.md` - 项目特定的核心：主要工作流、算法、领域逻辑、状态机、编排、渲染、编译、调度、同步或协议处理。
+4. `04-interfaces-integrations/README.md` - 公共 API、CLI/UI 界面、插件契约、网络协议、外部服务、导入/导出格式。
+5. `05-data-state-persistence/README.md` - 模式、存储、缓存、内存状态、迁移、序列化、结果/状态模型。
+6. `06-configuration-extension-security/README.md` - 配置加载、功能开关、认证/权限、信任边界、扩展钩子。
+7. `07-operations-observability/README.md` - 日志、指标、追踪、诊断、部署/运行时运维、故障恢复。
+8. `08-testing-build-release/README.md` - 测试策略、CI、打包、兼容性、发布自动化。
 
-If a module truly does not apply, keep its row in `coverage-matrix.md` as `N/A` and explain why. For very small repositories, modules may be summarized in `README.md`, but substantial repositories should use the canonical directory names.
+如果某个模块确实不适用，在 `coverage-matrix.md` 中将其行保留为 `N/A` 并说明原因。对于非常小的仓库，模块可以在 `README.md` 中摘要，但实质性仓库应使用规范的目录名。
 
-## Domain Coverage Audit
+## 领域覆盖审计
 
-After drafting the canonical modules, audit whether project-specific concepts are hidden inside broad pages and deserve their own subpages. This is a second pass, not a replacement for the canonical structure.
+在起草规范模块后，审计项目特定概念是否隐藏在宽泛页面中并值得拥有自己的子页面。这是第二轮审查，不是对规范结构的替代。
 
-Use these split criteria. Create a domain subpage only when the concept has source evidence plus enough supporting evidence to explain one coherent behavior:
+使用这些拆分标准。仅当概念有源码证据加上足够的支撑证据来解释一个连贯行为时才创建领域子页面：
 
-- Distinct lifecycle, state machine, algorithm, orchestration path, protocol, domain rule set, error/retry path, storage path, UI flow, command flow, deployment flow, or extension contract.
-- Evidence from at least two relevant categories: source code, tests, configuration/schema/migration, lifecycle or state transitions, error handling, operational behavior, examples, official docs, or external reference docs.
-- A maintainer would search for the concept by name, and the current page would otherwise mix multiple workflows.
-- The new subpage can be represented in both `coverage-matrix.md` and `source-map.md` with source evidence, test evidence when available, external reference evidence when used, and priority.
+- 独立的生命周期、状态机、算法、编排路径、协议、领域规则集、错误/重试路径、存储路径、UI 流、命令流、部署流或扩展契约。
+- 来自至少两个相关类别的证据：源代码、测试、配置/模式/迁移、生命周期或状态转换、错误处理、运维行为、示例、官方文档或外部参考文档。
+- 维护者会按名称搜索该概念，而当前页面否则会混合多个工作流。
+- 新的子页面可以在 `coverage-matrix.md` 和 `source-map.md` 中表示，带有源码证据、可用时的测试证据、使用时的外部参考证据和优先级。
 
-Do not split a topic just because an external wiki, official guide, or previous project has a page for it. External documents are useful for discovering possible coverage gaps; source evidence decides whether the local wiki gets a page.
+不要因为外部 Wiki、官方指南或既往项目有某个主题的页面就拆分它。外部文档对发现可能的覆盖缺口很有用；源码证据决定本地 Wiki 是否获得一个页面。
 
-## Anti-Customization Guardrails
+## 反定制化护栏
 
-- Keep the canonical top-level modules stable across projects. Put project-specific concepts in child pages, not in new top-level modules.
-- Do not copy a DeepWiki, official docs, or another repository's table of contents into this skill or into a generated wiki.
-- Do not make every project generate pages from one project's domain model. Domain examples are illustrative only; they are not required pages.
-- Every new domain subpage must have a `coverage-matrix.md` row and a `source-map.md` row.
-- If a domain concept is interesting but lacks source/test/config/lifecycle/error/docs evidence, record it as a coverage gap or open question instead of writing a speculative page.
+- 跨项目保持规范的顶层模块稳定。将项目特定概念放在子页面中，而不是新的顶层模块中。
+- 不要将 DeepWiki、官方文档或其他仓库的目录复制到此技能或生成的 Wiki 中。
+- 不要让每个项目都从一个项目的领域模型生成页面。领域示例仅用于说明；它们不是必需的页面。
+- 每个新的领域子页面必须有 `coverage-matrix.md` 行和 `source-map.md` 行。
+- 如果领域概念有趣但缺乏源码/测试/配置/生命周期/错误/文档证据，将其记录为覆盖缺口或待确认问题，而不是编写推测性页面。
 
-## Workflow
+## 工作流
 
-1. **Establish scope**
-   - If the user did not choose an output location, default to `docs/wiki/`.
-   - If the repo is local, generate docs from the current worktree. If the repo is remote, browse or clone only when needed and allowed.
-   - Scale depth to discovered concepts, not only file count: small repos can use one index plus 3-8 pages; medium repos usually need 8-25 pages; large mature repos can use 10-20 parent pages plus 30-70 child pages when evidence supports that depth.
+1. **确定范围**
+   - 如果用户没有选择输出位置，默认为 `docs/wiki/`。
+   - 如果仓库是本地的，从当前工作树生成文档。如果仓库是远程的，仅在需要且允许时浏览或克隆。
+   - 按发现的概念缩放深度，而不仅是文件数：小型仓库可用一个索引加 3-8 个页面；中型仓库通常需要 8-25 个页面；大型成熟仓库在证据支持该深度时可使用 10-20 个父页面加 30-70 个子页面。
 
-2. **Prepare the wiki output directory**
-   - Resolve helper scripts relative to this skill directory. In command examples below, `scripts/...` refers to the `scripts/` folder next to this `SKILL.md`.
-   - Default to merge mode when the user asks to generate or update docs without saying overwrite:
+2. **准备 Wiki 输出目录**
+   - 相对于此技能目录解析辅助脚本。在下面的命令示例中，`scripts/...` 指的是此 `SKILL.md` 旁边的 `scripts/` 文件夹。
+   - 当用户要求生成或更新文档但没有说覆盖时，默认为合并模式：
      ```bash
      python3 scripts/prepare_wiki_output.py prepare docs/wiki --mode merge
      ```
-   - Use Overwrite update mode when the user asks for `覆盖更新`, `overwrite`, `regenerate`, or replacement of an existing generated wiki:
+   - 当用户要求 `覆盖更新`、`overwrite`、`regenerate` 或替换现有生成的 Wiki 时使用覆盖更新模式：
      ```bash
      python3 scripts/prepare_wiki_output.py prepare docs/wiki --mode overwrite
      ```
-   - If there is no `.wiki-manifest.json`, inspect the directory first. Use `--all` only when the user clearly wants to replace that dedicated generated wiki directory:
+   - 如果没有 `.wiki-manifest.json`，先检查目录。仅当用户明显想替换该专用生成的 Wiki 目录时才使用 `--all`：
      ```bash
      python3 scripts/prepare_wiki_output.py prepare docs/wiki --mode overwrite --all
      ```
 
-3. **Create a repository evidence snapshot and concept inventory**
-   - Run the helper when available:
+3. **创建仓库证据快照和概念清单**
+   - 在可用时运行辅助工具：
      ```bash
      python3 scripts/repo_snapshot.py . --format markdown
      ```
-   - Use the snapshot to identify language mix, source roots, package boundaries, manifests, CI, existing docs, generated artifacts, and likely entry points.
-   - Supplement with targeted `rg`, `git grep`, `git log`, and file reads. Search for concrete project signals: registrations, routes, commands, UI screens, services, controllers, jobs, pipelines, providers, adapters, plugins, schemas, migrations, events, protocols, examples, tests, and deployment descriptors.
-   - If using DeepWiki, official docs, or external docs, use them only to discover possible gaps and vocabulary. Do not copy their structure; verify every planned page against local source evidence.
-   - Build a concept inventory before the wiki tree. Useful rows include: public surface, entry points, runtime units, core implementation candidates, domain workflows, algorithms, state transitions, data/state model, external IO, extension contracts, configuration/security, observability, operations, testing/build/release, and glossary terms. Omit rows that do not exist.
+   - 使用快照识别语言混合、源码根、包边界、清单、CI、现有文档、生成的产物和可能的入口点。
+   - 用针对性的 `rg`、`git grep`、`git log` 和文件读取补充。搜索具体的项目信号：注册、路由、命令、UI 屏幕、服务、控制器、作业、管道、提供者、适配器、插件、模式、迁移、事件、协议、示例、测试和部署描述符。
+   - 如果使用 DeepWiki、官方文档或外部文档，仅用它们发现可能的缺口和词汇。不要复制它们的结构；针对本地源码证据验证每个计划的页面。
+   - 在 Wiki 树之前构建概念清单。有用的行包括：公共表面、入口点、运行时单元、核心实现候选、领域工作流、算法、状态转换、数据/状态模型、外部 IO、扩展契约、配置/安全、可观测性、运维、测试/构建/发布和术语表术语。省略不存在的行。
 
-4. **Plan the wiki tree**
-   - Start from the Canonical Wiki Structure so different project wikis remain comparable. Then adapt summaries, examples, diagrams, and child pages to this repository's language and evidence.
-   - Preserve canonical top-level filenames unless the user explicitly requests a different output convention.
-   - Build a topic taxonomy around how a maintainer would explain the system: what the project exposes, how it starts, what runs at runtime, how data/control moves, where state lives, what it integrates with, how it is configured, how it is extended, how it is tested, and how it is operated or released.
-   - Create a coverage matrix before writing. It must track: canonical module, domain concept, current coverage, split recommendation, source evidence, test evidence, external reference evidence, and priority.
-   - Adapt those dimensions to the repo. For example, a CLI tool may need command parsing and filesystem effects; a frontend may need state management and routing; a library may need public APIs and compatibility contracts; an infrastructure repo may need environments, providers, and rollout flow.
-   - Split a topic when it has multiple lifecycles, multiple owners, or more than one coherent page of evidence.
-   - Merge topics when they are only directory names without independent behavior.
-   - Always include an overview page and a glossary for large projects.
-   - Use parent pages for orientation and child pages for source-dense mechanisms. Avoid one broad page that combines multiple public concepts simply because they share a directory or framework label.
-   - For `03-core-implementation`, choose child pages from the repository's real behavior. Small/medium repositories usually need 1-3 core child pages; complex repositories usually need 3-8 or more. Each deep dive should trace one meaningful behavior end to end.
+4. **规划 Wiki 树**
+   - 从规范 Wiki 结构开始，以便不同项目的 Wiki 保持可比性。然后使摘要、示例、图表和子页面适配此仓库的语言和证据。
+   - 保留规范的顶层文件名，除非用户明确要求不同的输出约定。
+   - 围绕维护者解释系统的方式构建主题分类：项目暴露什么、如何启动、运行时运行什么、数据/控制如何移动、状态存在于何处、它与什么集成、如何配置、如何扩展、如何测试以及如何运维或发布。
+   - 在编写之前创建覆盖矩阵。它必须跟踪：规范模块、领域概念、当前覆盖、拆分建议、源码证据、测试证据、外部参考证据和优先级。
+   - 使这些维度适配仓库。例如，CLI 工具可能需要命令解析和文件系统效果；前端可能需要状态管理和路由；库可能需要公共 API 和兼容性契约；基础设施仓库可能需要环境、提供者和上线流程。
+   - 当主题有多个生命周期、多个所有者或超过一页连贯证据时拆分它。
+   - 当主题仅是没有独立行为的目录名时合并它们。
+   - 对于大型项目始终包含概览页面和术语表。
+   - 使用父页面进行定位，使用子页面处理源码密集的机制。避免一个宽泛页面组合多个公共概念，仅仅因为它们共享目录或框架标签。
+   - 对于 `03-core-implementation`，从仓库的真实行为中选择子页面。小型/中型仓库通常需要 1-3 个核心子页面；复杂仓库通常需要 3-8 个或更多。每个深度分析应追踪一个有意义的行为端到端。
 
-5. **Write pages from evidence**
-   - Begin each page with `Relevant Source Files` or `Relevant Artifacts`, listing code, tests, schemas, configs, docs, or generated contracts that actually prove the page.
-   - Include `Related tests` and `Existing docs` sections or rows when evidence exists.
-   - State `Purpose and Scope` before details.
-   - Use tables for symbol/path/responsibility mappings.
-   - Use Mermaid diagrams for lifecycles, process boundaries, data flow, dependency direction, or request flow.
-   - Name pages in the repository's own language. Do not force every project into pages such as worker, backend, queue, controller, or service unless those concepts are present.
-   - In `Core Implementation` pages, go deeper than orientation: show trigger/input, coordinator, collaborators, data/state changes, branching rules, error/fallback behavior, extension points, and tests.
-   - Include tests, configuration, schemas, examples, and deployment files where they explain behavior.
-   - Use GitHub permalinks pinned to the snapshot commit for externally shared docs; keep local `path:line-line` citations acceptable for local-only docs.
-   - End with `Sources` or inline citations dense enough that a reader can jump to code.
-   - Read `references/page-templates.md` when writing multi-page docs or when the user asks for a reusable template.
+5. **从证据编写页面**
+   - **先阅读 `references/page-templates.md`** 获取所有页面模板，再开始编写。
+   - 每个页面以 `相关源文件` 或 `相关产物` 开始，列出实际证明该页面的代码、测试、模式、配置、文档或生成的契约。
+   - 在证据存在时包含 `相关测试` 和 `现有文档` 部分或行。
+   - 在细节之前声明 `目的与范围`。
+   - 使用表格进行符号/路径/职责映射，使用 Mermaid 图表表示生命周期、进程边界、数据流、依赖方向或请求流。
+   - 用仓库自身的语言命名页面，不要强迫每个项目进入 worker、backend、queue 等通用页面。
+   - 在 `核心实现` 页面中，展示触发器/输入、协调器、协作者、数据/状态变化、分支规则、错误/回退行为、扩展点和测试。
+   - 以 `来源` 或密集的内联引用结束，使读者可以跳转到代码。
 
-6. **Run Domain Coverage Audit**
-   - Re-read the coverage matrix, source map, existing docs, and any external comparison notes.
-   - Mark each candidate domain concept with `current coverage`, `split recommendation`, and `priority`.
-   - Split only when the split criteria above are met. If the recommendation is `Split`, add or update the subpage and add rows to both `coverage-matrix.md` and `source-map.md`.
-   - If an external document suggests a topic but local evidence is weak, mark it as `Gap` or `Monitor`; do not create a page from the external table of contents.
+6. **运行领域覆盖审计**
+   - 重新阅读覆盖矩阵、源码映射、现有文档和任何外部比较笔记。
+   - 用 `当前覆盖`、`拆分建议` 和 `优先级` 标记每个候选领域概念。
+   - 仅当满足上述拆分标准时才拆分。如果建议是 `拆分`，添加或更新子页面并在 `coverage-matrix.md` 和 `source-map.md` 中添加行。
+   - 如果外部文档建议了主题但本地证据薄弱，将其标记为 `缺口` 或 `观察`；不要从外部目录创建页面。
 
-7. **Update the generation manifest**
-   - After writing pages, record the generated file set so the next overwrite update can remove stale pages without touching user notes:
+7. **更新生成清单**
+   - 在编写页面后，记录生成的文件集，以便下次覆盖更新可以删除过时页面而不触及用户笔记：
      ```bash
      python3 scripts/prepare_wiki_output.py manifest docs/wiki
      ```
-   - If the wiki directory intentionally contains user-maintained notes, pass only the generated file paths to the manifest command.
+   - 如果 Wiki 目录有意包含用户维护的笔记，仅将生成的文件路径传递给清单命令。
 
-8. **Review the generated docs**
-   - Check that every page can answer: what this subsystem does, where it starts, what it depends on, how data/control flows, how it is configured, how it is tested, and what remains uncertain.
-   - Compare final pages against the coverage matrix. Add pages for missing high-value concepts or explicitly mark why a topic is out of scope.
-   - When comparing with DeepWiki or another external wiki, account for commit/version differences and use it as a coverage benchmark, not as proof that the local code has the same concepts.
-   - Remove generic filler such as "handles business logic" unless it is made specific and cited.
-   - Verify path names and line numbers after edits. If files changed during generation, update citations or note the snapshot.
+8. **审查生成的文档**
+   - 检查每个页面能否回答：该子系统做什么、从哪里开始、它依赖什么、数据/控制如何流动、如何配置、如何测试以及什么仍不确定。
+   - 将最终页面与覆盖矩阵比较。为缺失的高价值概念添加页面或明确标记为什么主题超出范围。
+   - 与 DeepWiki 或其他外部 Wiki 比较时，考虑提交/版本差异并将其用作覆盖基准，而不是作为本地代码有相同概念的证明。
+   - 删除诸如"处理业务逻辑"之类的通用填充内容，除非它被具体化和引用。
+   - 在编辑后验证路径名和行号。如果文件在生成期间更改，更新引用或注明快照。
 
-## Output Shape
+## 输出形态与质量标准
 
-For a substantial repository, create:
+对于实质性仓库，创建以下文件：
 
-- `docs/wiki/README.md` - table of contents, repository snapshot, architecture overview, and reading path.
-- `docs/wiki/coverage-matrix.md` - required; records canonical module, domain concept, current coverage, split recommendation, source evidence, test evidence, external reference evidence, and priority.
-- `docs/wiki/01-system-architecture/README.md`
-- `docs/wiki/02-entrypoints-runtime/README.md`
-- `docs/wiki/03-core-implementation/README.md` plus project-specific child pages.
-- `docs/wiki/04-interfaces-integrations/README.md`
-- `docs/wiki/05-data-state-persistence/README.md`
-- `docs/wiki/06-configuration-extension-security/README.md`
-- `docs/wiki/07-operations-observability/README.md`
-- `docs/wiki/08-testing-build-release/README.md`
-- `docs/wiki/glossary.md` - project terms, acronyms, key services, and public concepts.
-- `docs/wiki/source-map.md` - required source-to-topic map; every generated domain subpage should appear here.
-- `docs/wiki/.wiki-manifest.json` - generated file list used for safe overwrite updates.
+| 文件 | 用途 |
+| --- | --- |
+| `docs/wiki/README.md` | 目录、仓库快照、架构概览、阅读路径 |
+| `docs/wiki/coverage-matrix.md` | 必需；规范模块覆盖、拆分建议、证据、优先级 |
+| `docs/wiki/source-map.md` | 必需；源码到主题映射，每个子页面必须出现 |
+| `docs/wiki/glossary.md` | 项目术语、缩写、关键服务、公共概念 |
+| `01-system-architecture/` ~ `08-testing-build-release/` | 八个规范模块的 README.md，含项目特定子页面 |
+| `docs/wiki/.wiki-manifest.json` | 生成的文件列表，用于安全的覆盖更新 |
 
-For a small repository, a single `docs/wiki/README.md` can be enough if it still includes the canonical module headings, citations, architecture, testing, and source map sections.
+对于小型仓库，单个 `docs/wiki/README.md` 即可，但仍需包含规范模块标题、引用、架构、测试和源码映射部分。
 
-## DeepWiki-Inspired Quality Bar
+**质量标准** — 好页面的特征：
 
-Good pages have these traits:
+- **主题优先**："配置解析"优于"src/config 文件夹"
+- **证据可见**：每个段落有源码链接或 `path:line` 引用
+- **架构先于细节**：先定位读者，再命名类
+- **交叉链接**：概览指向深度分析，深度分析链接回相关主题
+- **快照纪律**：文档说明描述的是哪个代码版本
 
-- **Topic first**: "Configuration Resolution" beats "src/config folder".
-- **Stable structure, adaptive detail**: every wiki uses the canonical top-level modules, while `Core Implementation` follows the specific repository's real workflows.
-- **Evidence visible**: each paragraph has nearby source links or `path:line` evidence.
-- **Architecture before details**: orient the reader before naming every class.
-- **Cross-links**: overview pages point to deep dives; deep dives link back to related topics.
-- **Complete enough taxonomy**: mature repos cover their public surface, runtime behavior, state/data model, integrations, configuration, observability, operations, testing, and release path when those concepts exist.
-- **Tables and diagrams**: use them to compress relationships, not decorate.
-- **Snapshot discipline**: docs say which code version they describe.
+**避免的失败模式**：
 
-Avoid these failure modes:
-
-- File-tree documentation that explains paths but not behavior.
-- AI summary without citations.
-- Over-broad pages that mix unrelated subsystems.
-- Diagrams that are not backed by source evidence.
-- Rewriting existing official docs instead of linking and contextualizing them.
-- Assuming a fixed architecture pattern, such as every project having an API server, database, worker, queue, CLI, or frontend.
-- Copying a previous repository's page tree instead of deriving this repository's concepts from evidence.
+- 解释路径但不解释行为的文件树文档
+- 没有引用的 AI 摘要
+- 混合不相关子系统的宽泛页面
+- 没有源码证据的图表
+- 重写现有官方文档而非链接和情境化
+- 假设固定架构模式（每个项目都有 API、数据库、队列等）
+- 复制既往仓库的页面树而非从证据推导

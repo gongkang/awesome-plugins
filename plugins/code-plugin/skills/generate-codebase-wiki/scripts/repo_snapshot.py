@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"""Collect deterministic repository facts for codebase wiki generation."""
+"""Collect deterministic repository facts for codebase wiki generation.
+收集仓库事实用于代码库 Wiki 生成。
+"""
 
 from __future__ import annotations
 
@@ -344,32 +346,32 @@ def collect(root: Path) -> dict:
 
 def to_markdown(snapshot: dict) -> str:
     lines = [
-        "# Repository Evidence Snapshot",
+        "# 仓库证据快照",
         "",
-        f"- Root: `{snapshot['root']}`",
-        f"- Commit: `{snapshot['git']['commit'] or 'unknown'}`",
-        f"- Branch: `{snapshot['git']['branch'] or 'unknown'}`",
-        f"- Remote: `{snapshot['git']['remote_origin'] or 'unknown'}`",
-        f"- Dirty worktree: `{snapshot['git']['dirty']}`",
-        f"- Tracked/discovered files: `{snapshot['files']['count']}`",
+        f"- 根目录: `{snapshot['root']}`",
+        f"- 提交: `{snapshot['git']['commit'] or 'unknown'}`",
+        f"- 分支: `{snapshot['git']['branch'] or 'unknown'}`",
+        f"- 远程: `{snapshot['git']['remote_origin'] or 'unknown'}`",
+        f"- 工作树脏: `{snapshot['git']['dirty']}`",
+        f"- 跟踪/发现的文件: `{snapshot['files']['count']}`",
         "",
-        "## Top Directories",
+        "## 顶层目录",
         "",
     ]
     for directory, count in snapshot["files"]["top_directories"]:
         lines.append(f"- `{directory}`: {count}")
 
-    lines.extend(["", "## Top Extensions", ""])
+    lines.extend(["", "## 顶层扩展", ""])
     for ext, count in snapshot["files"]["top_extensions"]:
         lines.append(f"- `{ext}`: {count}")
 
     sections = [
-        ("Source Roots", snapshot["source_roots"]),
-        ("Module Roots", snapshot["module_roots"]),
-        ("Manifests", snapshot["manifests"]),
+        ("源码根", snapshot["source_roots"]),
+        ("模块根", snapshot["module_roots"]),
+        ("清单", snapshot["manifests"]),
         ("CI", snapshot["ci"]),
-        ("Existing Docs", snapshot["docs"]),
-        ("Likely Entrypoints", snapshot["likely_entrypoints"]),
+        ("现有文档", snapshot["docs"]),
+        ("可能的入口点", snapshot["likely_entrypoints"]),
     ]
     for title, items in sections:
         lines.extend(["", f"## {title}", ""])
@@ -378,7 +380,7 @@ def to_markdown(snapshot: dict) -> str:
         else:
             lines.append("- None detected")
 
-    lines.extend(["", "## Tests by Top Directory", ""])
+    lines.extend(["", "## 按顶层目录统计的测试", ""])
     if snapshot["tests_by_top_directory"]:
         for directory, count in snapshot["tests_by_top_directory"]:
             lines.append(f"- `{directory}`: {count}")

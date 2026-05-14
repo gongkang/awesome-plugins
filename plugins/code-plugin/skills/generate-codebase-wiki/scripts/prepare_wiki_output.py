@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"""Prepare and track generated wiki output files."""
+"""Prepare and track generated wiki output files.
+准备和跟踪生成的 Wiki 输出文件。
+"""
 
 from __future__ import annotations
 
@@ -54,7 +56,7 @@ def delete_empty_dirs(output: Path, dry_run: bool) -> None:
         try:
             next(directory.iterdir())
         except StopIteration:
-            print(f"remove empty dir: {directory.relative_to(output).as_posix()}")
+            print(f"删除空目录: {directory.relative_to(output).as_posix()}")
             if not dry_run:
                 directory.rmdir()
 
@@ -66,7 +68,7 @@ def remove_files(output: Path, files: Iterable[str], dry_run: bool) -> None:
             continue
         if target.is_dir():
             raise ValueError(f"manifest path is a directory, not a file: {relative}")
-        print(f"remove file: {relative}")
+        print(f"删除文件: {relative}")
         if not dry_run:
             target.unlink()
     delete_empty_dirs(output, dry_run)
@@ -93,7 +95,7 @@ def prepare(output: Path, mode: str, all_files: bool, dry_run: bool) -> None:
         print(f"would create directory: {output}")
 
     if mode == "merge":
-        print(f"merge mode: preserving existing files in {output}")
+        print(f"合并模式: 保留 {output} 中的现有文件")
         return
 
     manifest_files = load_manifest(output)
@@ -107,7 +109,7 @@ def prepare(output: Path, mode: str, all_files: bool, dry_run: bool) -> None:
     remove_files(output, manifest_files, dry_run)
     manifest_path = output / MANIFEST_NAME
     if manifest_path.exists():
-        print(f"remove file: {MANIFEST_NAME}")
+        print(f"删除文件: {MANIFEST_NAME}")
         if not dry_run:
             manifest_path.unlink()
 
@@ -123,7 +125,7 @@ def write_manifest(output: Path, files: list[str]) -> None:
         "files": sorted(set(normalized)),
     }
     (output / MANIFEST_NAME).write_text(json.dumps(data, indent=2, sort_keys=True) + "\n")
-    print(f"wrote {MANIFEST_NAME} with {len(data['files'])} files")
+    print(f"已写入 {MANIFEST_NAME}，包含 {len(data['files'])} 个文件")
 
 
 def main() -> int:

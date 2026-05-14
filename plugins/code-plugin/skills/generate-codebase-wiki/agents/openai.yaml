@@ -1,4 +1,4 @@
 interface:
-  display_name: "Generate Codebase Wiki"
-  short_description: "Canonical source-grounded codebase wiki"
-  default_prompt: "Use $generate-codebase-wiki to generate a canonical source-grounded project wiki for this repository."
+  display_name: "生成代码库 Wiki"
+  short_description: "基于源码的规范项目 Wiki"
+  default_prompt: "使用 $generate-codebase-wiki 为此仓库生成基于源码的规范项目 Wiki。"
