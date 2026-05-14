@@ -1,6 +1,6 @@
 ---
 name: api-e2e-test
-description: Use when 用户要求为接口编写、生成或维护 E2E/API 自动化测试，或要求基于接口文档补齐真实 HTTP 场景、测试数据依赖、跳过原因和执行流程记录。
+description: 当用户要求为接口编写、生成或维护 E2E/API 自动化测试，或要求基于接口文档补齐真实 HTTP 场景、测试数据依赖、跳过原因和执行流程记录时使用此技能。也适用于：用户提到"写接口测试"、"生成 E2E 测试"、"创建端到端测试"、"补齐 E2E 场景"、"维护 E2E 脚本"、"记录 E2E 测试数据"等场景。
 origin: Custom
 ---
 
@@ -176,20 +176,20 @@ CI 也应把“启动服务”和“执行 E2E”拆成不同步骤。
 ````markdown
 # {接口或端点组} E2E 用例
 
-## Source Interface Document
+## 源码接口文档
 
 - `docs/interfaces/{文件名}.md`
 
 本用例集遵循源文档中的流程图、关键业务规则、返回策略和已知风险。
 
-## Runtime
+## 运行环境
 
-- Prerequisite: start the service externally before running these cases.
-- Startup example: `{启动命令}`
-- Base URL: `http://127.0.0.1:{port}`
-- Test program: `tests/e2e-api/scripts/{InterfaceName}E2e.java`
+- 前置条件：运行测试前必须先外部启动服务。
+- 启动示例：`{启动命令}`
+- Base URL：`http://127.0.0.1:{port}`
+- 测试程序：`tests/e2e-api/scripts/{InterfaceName}E2e.java`
 
-## Covered Endpoints
+## 覆盖端点
 
 - `GET /example`
 - `POST /api/example`
@@ -198,12 +198,12 @@ CI 也应把“启动服务”和“执行 E2E”拆成不同步骤。
 
 ## 场景：{中文场景描述}
 
-**Purpose:** 该用例验证的端到端行为。
+**目的：** 该用例验证的端到端行为。
 
-**Preconditions:**
+**前置条件：**
 - 所需的上游测试数据、模型、缓存或配置。
 
-**Request:**
+**请求：**
 
 ```http
 POST /{路由路径}
@@ -216,7 +216,7 @@ Content-Type: application/json
 }
 ```
 
-**Assertions:**
+**断言：**
 - 请求必须经过真实 HTTP 端口。
 - HTTP 状态码符合预期。
 - 关键响应字段符合预期。
