@@ -1,0 +1,21 @@
+{
+  "name": "code-workflow",
+  "version": "1.0.0",
+  "description": "代码项目开发流程技能集合",
+  "author": {
+    "name": "gongkang"
+  },
+  "homepage": "https://github.com/gongkang/awesome-plugins",
+  "repository": "https://github.com/gongkang/awesome-plugins",
+  "license": "MIT",
+  "keywords": ["code", "development", "testing", "documentation", "wiki", "health-check", "workflow"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Code Workflow",
+    "shortDescription": "代码项目文档、测试、Wiki 与健康检查技能集合",
+    "longDescription": "提供 API 文档生成、API E2E 测试、浏览器自动化测试、项目 Wiki 生成和项目健康度分析等面向代码项目开发流程的 Codex 技能。",
+    "developerName": "gongkang",
+    "category": "Development",
+    "capabilities": ["Read", "Write"]
+  }
+}

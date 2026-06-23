@@ -8,9 +8,9 @@
   },
   "plugins": [
     {
-      "name": "code-plugin",
-      "source": "./plugins/code-plugin",
-      "description": "代码相关插件集合",
+      "name": "code-workflow",
+      "source": "./plugins/code-workflow",
+      "description": "代码项目开发流程技能集合",
       "version": "1.0.0",
       "author": {
         "name": "gongkang"
@@ -18,14 +18,14 @@
       "homepage": "https://github.com/gongkang/awesome-plugins",
       "repository": "https://github.com/gongkang/awesome-plugins",
       "license": "MIT",
-      "keywords": ["code", "development", "documentation", "wiki"],
+      "keywords": ["code", "development", "testing", "documentation", "wiki", "health-check", "workflow"],
       "category": "development",
-      "tags": ["code", "documentation", "productivity"]
+      "tags": ["code", "documentation", "testing", "productivity"]
     },
     {
-      "name": "claw-plugin",
-      "source": "./plugins/claw-plugin",
-      "description": "NanoClaw 插件",
+      "name": "computer-use",
+      "source": "./plugins/computer-use",
+      "description": "屏幕控制与屏幕监控技能集合",
       "version": "1.0.0",
       "author": {
         "name": "gongkang"
@@ -33,9 +33,39 @@
       "homepage": "https://github.com/gongkang/awesome-plugins",
       "repository": "https://github.com/gongkang/awesome-plugins",
       "license": "MIT",
-      "keywords": ["claw", "nanoclaw"],
+      "keywords": ["computer-use", "screen", "automation", "gui", "monitor", "control"],
       "category": "productivity",
-      "tags": ["claw", "automation"]
+      "tags": ["screen", "automation", "gui"]
+    },
+    {
+      "name": "search",
+      "source": "./plugins/search",
+      "description": "搜索与资料聚合技能集合",
+      "version": "1.0.0",
+      "author": {
+        "name": "gongkang"
+      },
+      "homepage": "https://github.com/gongkang/awesome-plugins",
+      "repository": "https://github.com/gongkang/awesome-plugins",
+      "license": "MIT",
+      "keywords": ["search", "ai-dialog-search", "research", "aggregation", "ai"],
+      "category": "productivity",
+      "tags": ["search", "ai", "research"]
+    },
+    {
+      "name": "notes",
+      "source": "./plugins/notes",
+      "description": "笔记整理与美化命令集合",
+      "version": "1.0.0",
+      "author": {
+        "name": "gongkang"
+      },
+      "homepage": "https://github.com/gongkang/awesome-plugins",
+      "repository": "https://github.com/gongkang/awesome-plugins",
+      "license": "MIT",
+      "keywords": ["notes", "markdown", "organization", "beautify"],
+      "category": "productivity",
+      "tags": ["notes", "markdown", "productivity"]
     }
   ]
 }

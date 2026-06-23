@@ -1,11 +1,11 @@
 {
-  "name": "claw-plugin",
+  "name": "computer-use",
   "version": "1.0.0",
-  "description": "NanoClaw 插件",
+  "description": "屏幕控制与屏幕监控技能集合",
   "author": {
     "name": "gongkang"
   },
   "agents": [],
-  "commands": ["./commands/"],
+  "commands": [],
   "skills": ["./skills/"]
 }

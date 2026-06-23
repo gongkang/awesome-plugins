@@ -1,0 +1,21 @@
+{
+  "name": "search",
+  "version": "1.0.0",
+  "description": "搜索与资料聚合技能集合",
+  "author": {
+    "name": "gongkang"
+  },
+  "homepage": "https://github.com/gongkang/awesome-plugins",
+  "repository": "https://github.com/gongkang/awesome-plugins",
+  "license": "MIT",
+  "keywords": ["search", "ai-dialog-search", "research", "aggregation", "ai"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Search",
+    "shortDescription": "搜索与 AI 对话聚合技能集合",
+    "longDescription": "提供 AI 对话网站聚合搜索能力，并为后续网页研究、来源核验、搜索摘要和主题追踪等搜索相关技能预留扩展空间。",
+    "developerName": "gongkang",
+    "category": "Productivity",
+    "capabilities": ["Read", "Write"]
+  }
+}

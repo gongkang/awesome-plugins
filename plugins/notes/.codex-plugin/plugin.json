@@ -1,0 +1,20 @@
+{
+  "name": "notes",
+  "version": "1.0.0",
+  "description": "笔记整理与美化命令集合",
+  "author": {
+    "name": "gongkang"
+  },
+  "homepage": "https://github.com/gongkang/awesome-plugins",
+  "repository": "https://github.com/gongkang/awesome-plugins",
+  "license": "MIT",
+  "keywords": ["notes", "markdown", "organization", "beautify"],
+  "interface": {
+    "displayName": "Notes",
+    "shortDescription": "笔记整理与美化能力集合",
+    "longDescription": "当前提供 Claude Code Markdown 笔记美化命令，并为后续笔记自动整理、摘要、双链整理和知识库化技能预留扩展空间。",
+    "developerName": "gongkang",
+    "category": "Productivity",
+    "capabilities": ["Read", "Write"]
+  }
+}

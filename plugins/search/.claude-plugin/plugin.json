@@ -1,7 +1,7 @@
 {
-  "name": "code-plugin",
+  "name": "search",
   "version": "1.0.0",
-  "description": "代码相关插件集合",
+  "description": "搜索与资料聚合技能集合",
   "author": {
     "name": "gongkang"
   },

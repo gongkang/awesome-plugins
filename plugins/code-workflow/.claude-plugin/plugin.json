@@ -1,0 +1,11 @@
+{
+  "name": "code-workflow",
+  "version": "1.0.0",
+  "description": "代码项目开发流程技能集合",
+  "author": {
+    "name": "gongkang"
+  },
+  "agents": [],
+  "commands": [],
+  "skills": ["./skills/"]
+}

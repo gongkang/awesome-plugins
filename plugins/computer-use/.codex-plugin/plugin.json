@@ -1,0 +1,21 @@
+{
+  "name": "computer-use",
+  "version": "1.0.0",
+  "description": "屏幕控制与屏幕监控技能集合",
+  "author": {
+    "name": "gongkang"
+  },
+  "homepage": "https://github.com/gongkang/awesome-plugins",
+  "repository": "https://github.com/gongkang/awesome-plugins",
+  "license": "MIT",
+  "keywords": ["computer-use", "screen", "automation", "gui", "monitor", "control"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Computer Use",
+    "shortDescription": "可见桌面 GUI 控制、截图感知与屏幕监控技能",
+    "longDescription": "提供屏幕截图感知、GUI 元素定位、点击输入、持续录屏、变化检测、等待稳定和关键帧提取等电脑使用相关 Codex 技能。",
+    "developerName": "gongkang",
+    "category": "Productivity",
+    "capabilities": ["Read", "Write"]
+  }
+}

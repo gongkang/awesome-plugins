@@ -1,0 +1,11 @@
+{
+  "name": "notes",
+  "version": "1.0.0",
+  "description": "笔记整理与美化命令集合",
+  "author": {
+    "name": "gongkang"
+  },
+  "agents": [],
+  "commands": ["./commands/"],
+  "skills": []
+}
