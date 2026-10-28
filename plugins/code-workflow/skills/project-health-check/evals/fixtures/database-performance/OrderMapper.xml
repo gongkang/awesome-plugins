@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 合成离线验收源码；Q_LIST 与 Q_COUNT 由同一列表入口各调用一次。 -->
+<mapper namespace="example.orders.OrderMapper">
+    <select id="listOrders" resultType="map">
+        SELECT DISTINCT o.id, o.created_at, c.display_name
+        FROM orders o
+        JOIN customers c ON c.id = o.customer_id
+        JOIN order_items i ON i.order_id = o.id
+        JOIN payments p ON p.order_id = o.id
+        JOIN shipments s ON s.order_id = o.id
+        WHERE o.tenant_id = #{tenantId}
+          AND DATE(o.created_at) = #{day}
+        ORDER BY o.created_at DESC, o.id DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countOrders" resultType="long">
+        SELECT COUNT(DISTINCT o.id)
+        FROM orders o
+        JOIN customers c ON c.id = o.customer_id
+        JOIN order_items i ON i.order_id = o.id
+        JOIN payments p ON p.order_id = o.id
+        JOIN shipments s ON s.order_id = o.id
+        WHERE o.tenant_id = #{tenantId}
+          AND DATE(o.created_at) = #{day}
+    </select>
+
+    <select id="rareReport" resultType="map">
+        SELECT status, COUNT(*) AS order_count
+        FROM orders
+        GROUP BY status
+    </select>
+</mapper>

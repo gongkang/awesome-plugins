@@ -23,21 +23,6 @@
       "tags": ["code", "documentation", "testing", "productivity"]
     },
     {
-      "name": "computer-use",
-      "source": "./plugins/computer-use",
-      "description": "屏幕控制与屏幕监控技能集合",
-      "version": "1.0.0",
-      "author": {
-        "name": "gongkang"
-      },
-      "homepage": "https://github.com/gongkang/awesome-plugins",
-      "repository": "https://github.com/gongkang/awesome-plugins",
-      "license": "MIT",
-      "keywords": ["computer-use", "screen", "automation", "gui", "monitor", "control"],
-      "category": "productivity",
-      "tags": ["screen", "automation", "gui"]
-    },
-    {
       "name": "search",
       "source": "./plugins/search",
       "description": "搜索与资料聚合技能集合",

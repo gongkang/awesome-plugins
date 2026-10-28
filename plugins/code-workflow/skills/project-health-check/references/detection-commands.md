@@ -153,38 +153,63 @@ govulncheck ./... 2>/dev/null
 
 ## 4. 性能瓶颈检测
 
-### 数据库查询问题
+先按 [技术栈](performance-by-stack.md) 选择方法；涉及关系型数据库时再读 [数据库性能分析](database-performance.md)。命令在对应组件根目录运行，缩小到实际语言、框架和存储；不要在所有项目上执行整套候选搜索。
+
+### 技术栈定位
 
 ```bash
-# N+1 查询模式
-grep -rn "\.forEach\|for.*in" --include="*.ts" --include="*.js" --include="*.py" . -A 3 | grep -i "find\|get\|query\|select"
-
-# SELECT * 模式
-grep -rn "SELECT \*\|select(\*)" --include="*.py" --include="*.ts" --include="*.sql" . 2>/dev/null
+# 从清单、锁文件和框架配置识别候选，随后读取入口及调用路径确认实际使用
+rg --files -g 'package.json' -g '*lock*' -g 'pom.xml' -g 'build.gradle*' -g 'pyproject.toml' -g 'requirements*.txt' -g 'go.mod' -g '*.csproj' -g 'schema.prisma' -g 'settings.py' -g 'next.config.*'
 ```
 
-### API 性能问题
+结合实际驱动和 ORM provider 确认数据库，不能由 Java 推断 MyBatis、由 Prisma 推断 MySQL，或把前端和 Node 服务当作同一个运行环境。运行时、协程/事件循环或渲染问题按对应参考分析；下列 SQL 搜索仅在有对应访问时使用，不会自动确认慢查、索引未命中或线上高频。
+
+### 查询、索引及运行证据定位
 
 ```bash
-# 缺少分页
-grep -rn "find\|list\|get.*all" --include="*.ts" --include="*.py" . | grep -v "page\|limit\|offset\|cursor"
+# 查询和模型候选文件；尊重 ignore，随后按实际源码根目录缩小范围
+rg --files -g '*.sql' -g '*Mapper.xml' -g '*.prisma' -g '*.java' -g '*.py' -g '*.go' -g '*.ts' -g '*.tsx' -g '*.js' -g '*.cs'
 
-# 同步等待多个请求
-grep -rn "await.*await" --include="*.ts" --include="*.js" . 2>/dev/null
+# SQL、Java 注解/MyBatis 和 ORM 调用；回到文件读取完整语句和动态分支
+rg -n -i -g '*.sql' -g '*.xml' -g '*.java' -g '*.py' -g '*.go' -g '*.ts' -g '*.tsx' -g '*.js' -g '*.cs' 'select\b|join\b|@Select|selectList|selectOne|createQueryBuilder|findMany|select_related|prefetch_related|joinedload|selectinload|Preload|ToListAsync|AsEnumerable|Include\(' .
+
+# 索引声明（只证明仓库声明，不能证明已经部署或被实际使用）
+rg -n -i -g '*.sql' -g '*.xml' -g '*.prisma' -g '*.java' -g '*.py' -g '*.go' -g '*.ts' -g '*.cs' 'create\s+(unique\s+)?index|add\s+(unique\s+)?(index|key)|primary\s+key|\bkey\s+|@@index|@@unique|@Index|Index\(|indexes\s*=|index:|HasIndex\(' .
+
+# 已提供的本地计划、慢日志或统计导出；没有文件不等于没有慢查
+rg --files -g '*explain*' -g '*slow*' -g '*query*stats*' -g '*trace*.json' -g '*digest*'
 ```
 
-### 前端性能问题
+### 循环、分页和关联候选
 
 ```bash
-# 包大小
+# N+1 需要读取循环体、被调函数及 ORM 加载策略，不能由邻近关键字直接定性
+rg -n -g '*.java' -g '*.py' -g '*.go' -g '*.ts' -g '*.js' 'for\s*\(|for\s+|\.forEach\(|\.map\(' .
+
+# 分页、计数、聚合和关联：检查是否下推到数据库及结果语义
+rg -n -i -g '*.sql' -g '*.xml' -g '*.java' -g '*.py' -g '*.go' -g '*.ts' -g '*.js' 'offset\b|limit\b|count\s*\(|distinct\b|group\s+by|order\s+by|join\b' .
+```
+
+别用排除包含 page/limit 的单行来认定缺少分页：调用方可能限制了结果，ORM 也可能在关联后做内存分页。高频多表关联需核对关联基数、排序、count 与实际统计；元数据、普通计划和指纹统计的条件及示例见 [数据库性能分析](database-performance.md)。
+
+### API 与前端性能
+
+```bash
+# 追踪等待、并发和池配置；出现串行调用不一定可以并行
+rg -n -g '*.ts' -g '*.js' -g '*.py' -g '*.go' -g '*.java' 'await |Promise\.all|gather\(|connectionTimeout|maximumPoolSize|SetMaxOpenConns' .
+```
+
+检查每请求 I/O 次数、依赖关系、超时、池等待、响应大小及对象映射开销；提出并行、批量或缓存前确认资源上限和一致性。
+
+```bash
+# 已有构建产物大小仅为线索，不为检查自动触发构建或覆盖文件
 du -sh dist/ build/ .next/ 2>/dev/null
 
-# 代码分割
-grep -rn "lazy\|Suspense\|dynamic" --include="*.tsx" --include="*.jsx" . 2>/dev/null | wc -l
-
-# 大型图片
-find . -name "*.png" -o -name "*.jpg" -size +500k 2>/dev/null
+# 读取相关页面和实际资源加载行为，不以 lazy 数量判断性能
+rg -n -g '*.tsx' -g '*.jsx' -g '*.vue' 'lazy|Suspense|dynamic\(|import\(' .
 ```
+
+优先解读已有 bundle、网络瀑布、长任务或渲染记录。没有运行数据时只报告资源/实现风险，不虚构首屏、长任务或吞吐指标。
 
 ---
 

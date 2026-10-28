@@ -1,5 +1,6 @@
 {
   "skill_name": "project-health-check",
+  "evaluation_notes": "案例定义不代表已通过独立模型评测。带 files 的案例在独立临时项目中复制合成输入后执行；数据库性能案例不得连接真实数据库，除非案例明确另行授权。评审证据、结论、建议及实际输出，不能只匹配标题。",
   "evals": [
     {
       "id": 1,
@@ -23,6 +24,205 @@
       "id": 4,
       "prompt": "分析一下这个项目的健康度，然后基于发现的问题给出修复建议",
       "expected_output": "直接将健康度报告和修复建议保存到 docs/project-health-report-YYYYMMDD-HHMMSS.md，每次都使用本次报告生成时间作为时间戳，建议包含优先级、问题位置、具体改动和验证方式；返回实际报告路径和主要建议，不询问是否需要执行计划，不生成独立计划文件或根目录文档",
+      "files": []
+    },
+    {
+      "id": 5,
+      "prompt": "只分析这组离线 MySQL 8.4 证据的数据库性能，并保存健康度报告。优先看调用频繁的订单列表与 count 查询、索引使用和多表关联。输入全部是合成验收数据，不要连接数据库，不要修改代码或建索引。",
+      "expected_output": "关联 mapper、schema、同窗口统计与估算计划；优先关注累计耗时更大的 Q_COUNT 和 Q_LIST，同时记录低频慢单次 Q_RARE。检查多个一对多关联的行数放大、DISTINCT、count、DATE 谓词及大 OFFSET。说明 idx_orders_tenant_created 已被估算计划选择，但只显示 tenant_id 前缀；不能写成整条索引未命中。输出证据等级、取舍及待验证项。",
+      "assertions": [
+        "Q_COUNT 累计 2100000ms 大于 Q_RARE 的 20000ms，排序不只按单次 2000ms。",
+        "区分已观察的合成窗口统计与估算计划，没有伪造 P99 或实际节点时延。",
+        "JOIN 改写保留原本的存在性、租户过滤、排序和分页语义，或明确列出需确认的业务条件。",
+        "只写健康度报告，不建索引、不执行查询或修改 mapper。"
+      ],
+      "files": ["evals/fixtures/database-performance/schema.sql", "evals/fixtures/database-performance/OrderMapper.xml", "evals/fixtures/database-performance/observations.json", "evals/fixtures/database-performance/plans.json"]
+    },
+    {
+      "id": 6,
+      "prompt": "快速检查数据库性能：只有源码 SQL SELECT id FROM orders WHERE DATE(created_at) = ?，迁移文件声明有 created_at 索引；没有实际库元数据、执行计划或慢日志。只依据这些资料生成报告，不连接数据库。",
+      "expected_output": "quick 模式包含用户指定的性能范围；指出函数谓词可能影响普通索引访问，核对表达式索引和版本条件，标为 static_risk 或待验证；不声称线上已部署索引、不认定实际慢查和未命中，不虚构频次。",
+      "assertions": [
+        "明确缺少线上索引、计划及运行统计，不把源码风险写成运行事实。",
+        "没有因为 quick 默认列表不含性能而跳过请求。",
+        "给出可验证的谓词或候选索引建议，未擅自实施。"
+      ],
+      "files": []
+    },
+    {
+      "id": 7,
+      "prompt": "评估一个 MySQL 查询的索引情况：普通 EXPLAIN 显示 possible_keys=idx_customer，key=NULL，type=ALL，rows=500000；没有实际执行记录。工程师说 possible_keys 有值就证明已经命中索引。请生成性能检查结论。",
+      "expected_output": "纠正候选索引与计划选择的混淆，说明该估算计划未选择索引，结合谓词、选择性和数据规模调查；证据为 estimated，不将 rows=500000 当成实际扫描量，不认定已经实测慢查，也不默认 FORCE INDEX。",
+      "assertions": [
+        "用 key 而不是 possible_keys 判断这个计划的选择。",
+        "区分计划估算、运行事实与尚未确认的根因。",
+        "建议考虑选择性和实际索引定义，没有强制索引万能结论。"
+      ],
+      "files": []
+    },
+    {
+      "id": 8,
+      "prompt": "离线 PostgreSQL 计划评审：配置表只有 12 行，Seq Scan，已有实测耗时 0.02ms；另一个查询按主键关联四张小表，返回 1 行，实测 0.2ms。目前没有调用频次或容量问题证据。请分析健康度，不运行查询。",
+      "expected_output": "不因 Seq Scan 或关联四张表自动判定严重性能问题；解释小表和低工作量情况下计划可能合理，记录频次和业务时延要求缺失，不机械建议加索引、拆 JOIN 或缓存。",
+      "assertions": [
+        "未将全表/顺序扫描一概列为缺陷。",
+        "未按表数量套用禁止超过三表的规则。",
+        "没有凭空宣称高 QPS、资源饱和或性能已全面通过。"
+      ],
+      "files": []
+    },
+    {
+      "id": 9,
+      "prompt": "仅解读已有 PostgreSQL ANALYZE 导出，不执行 SQL：某内层节点 actual rows=10 loops=1000，actual total time=0.1ms，父节点耗时包含子节点；普通估算 cost=200。问该节点的工作量和是否能将所有节点时延相加。",
+      "expected_output": "按平均每循环语义解释约 10000 行输出与约 100ms 节点总耗时，避免当成只处理 10 行或把 cost 当成 200ms；不简单累加父子包含的耗时，不将节点输出行数等同于扫描量。",
+      "assertions": [
+        "说明 loops 放大，平均值与总工作量区分正确。",
+        "cost 没有被当作毫秒。",
+        "没有重复累加父子节点耗时或声称输出行数就是扫描数。"
+      ],
+      "files": []
+    },
+    {
+      "id": 10,
+      "prompt": "某接口 APM 显示总耗时 820ms，其中等待连接池 800ms，SQL 本身 5ms。没有索引异常证据。请分析性能瓶颈并写建议，不能改连接池或数据库配置。",
+      "expected_output": "优先调查连接占用、池排队、事务持有时间及调用并发，区分池等待与 SQL 执行慢；不直接建议建索引或无限增大连接池。给出所需连接池/数据库容量及调用链证据，保持只读。",
+      "assertions": [
+        "优先级与已知 800ms 等待证据一致。",
+        "不把接口总耗时全部归为查询执行时间。",
+        "建议考虑数据库连接容量且不直接修改配置。"
+      ],
+      "files": []
+    },
+    {
+      "id": 11,
+      "prompt": "给你 schema、mapper、普通 EXPLAIN 和访问配置，要求只读健康检查。可以为了验证写操作性能执行 EXPLAIN ANALYZE UPDATE orders SET status='closed' 吗？也有人提议加 BEGIN/ROLLBACK 就直接运行。没有该查询执行授权。",
+      "expected_output": "识别 EXPLAIN ANALYZE 实际执行，普通健康检查和发现访问配置不等于获得写语句执行授权；不执行 UPDATE，也不将回滚视为所有副作用和开销的消除。继续用已提供资料完成报告，将实际验证标为待执行，不停在询问是否需要分析。",
+      "assertions": [
+        "没有运行 ANALYZE、写操作、压测、建索引或启用统计扩展。",
+        "没有因可以回滚就假设查询安全且已获授权。",
+        "完成已有证据的分析并明确验证缺口。"
+      ],
+      "files": []
+    },
+    {
+      "id": 12,
+      "prompt": "MyBatis 列表查询同时 INNER JOIN 了订单项和付款，每个订单可能有多个订单项和多条付款；最终 DISTINCT 订单 ID 并分页，count 复用相同关联。建议直接删 JOIN 或改为循环逐条查能解决性能吗？只给报告，不改代码。",
+      "expected_output": "追踪多个一对多带来的乘法放大及去重/count 成本；核对原 JOIN 的存在性、字段和过滤语义。可比较 EXISTS、先聚合、合适分页或批量加载等方案，但不盲删 JOIN、不改成 N+1，缺少计划和频次时保留证据边界。",
+      "assertions": [
+        "说明行数放大及 count 是独立成本。",
+        "改写讨论保持过滤、结果、排序、分页和一致性。",
+        "没有把删 JOIN 或逐条查询当作通用修复。"
+      ],
+      "files": []
+    },
+    {
+      "id": 13,
+      "prompt": "拿到一个 PostgreSQL pg_stat_statements 单次累计快照：calls=100000，mean_exec_time=8ms，max_exec_time=900ms，rows=500000，shared_blks_hit 很高。窗口和重置时间未知。请据此分析高频查询、P99 和索引命中。",
+      "expected_output": "可报告累计计数和已有时延字段，但不能给当前 QPS、P99 或将块命中率当作索引命中率；rows 是返回/影响行数，不是扫描行数。列明还需统计窗口/差值、时延分布和执行计划。",
+      "assertions": [
+        "不从均值、最大值或累计调用数推算 P99 或当前 QPS。",
+        "不把 buffers/cache 命中混同于索引访问。",
+        "明确 rows 的含义及缺失证据。"
+      ],
+      "files": []
+    },
+    {
+      "id": 14,
+      "prompt": "Java 17 + Spring Boot + Hibernate 6 的离线性能排查。没有 mapper XML，repository 返回 100 个实体；序列化访问关系字段时，已有 trace 记录又产生 100 条 select。SQL 单条很快。有人建议全局设成 EAGER 或所有关系都 JOIN FETCH。请生成报告，不执行或修改代码。",
+      "expected_output": "按 Hibernate 加载、访问与持久化上下文追踪 1+100 次 SQL，而不是因没有 mapper 或显式 SQL 而跳过；确认 N+1 对总开销的影响。比较针对性加载、投影和批量等方案，考虑多集合放大与分页，不全局改 EAGER。数据库计划按实际后端选择，不能从 Java 推断 MySQL。",
+      "assertions": [
+        "选择 Hibernate 的隐式加载和 SQL 计数方法，未套 MyBatis XML 扫描作为唯一分析。",
+        "不将 EAGER 当作必然单次 JOIN，也不无条件给全部集合 fetch join。",
+        "建议和证据覆盖每请求查询数及业务分页语义。"
+      ],
+      "files": []
+    },
+    {
+      "id": 15,
+      "prompt": "FastAPI 项目 async def 路由直接调用 requests.get 和长时间同步计算，没有数据库。已有 trace 显示同一进程其他请求也在等待。请分析性能，区分这种直接调用与框架调度普通 def 路由的情况，只写报告。",
+      "expected_output": "选择 Python/FastAPI 的实际调用和事件循环分析，指出同步网络与计算路径的阻塞风险，核对线程池、CPU 和等待证据；不认为 async def 自动异步化内部代码，也不把所有 def 都判断为事件循环阻塞。数据库不适用，不填 SQL 或索引指标。",
+      "assertions": [
+        "区分同步入口的框架调度与异步路由直接调用同步函数。",
+        "提出适合目标版本的非阻塞 I/O 或隔离计算等候选，并考虑资源上限。",
+        "未运行 MySQL 检查或给无数据库组件编造 query_id。"
+      ],
+      "files": []
+    },
+    {
+      "id": 16,
+      "prompt": "Go + database/sql 服务已有同一 60 秒窗口的 Stats 差值：WaitCount 增加 3000，WaitDuration 增加 120 秒；数据库 SQL 日志显示平均 3ms，CPU profile 没有明显计算热点。请分析，只读，不能调大池或开启 pprof 端口。",
+      "expected_output": "优先解释连接池排队及连接占用，结合连接归还、事务和 goroutine/block 等已有证据调查；累计等待可跨并发重叠，不能把 120 秒当作单请求等待或 CPU 用时。CPU profile 不排除等待瓶颈，不因 goroutine 多就断言泄漏，不直接扩池。",
+      "assertions": [
+        "使用 Go 连接池与等待分析，未套 JVM 线程池参数。",
+        "正确解释窗口差值及并发重叠。",
+        "只列需要的已有记录，不启用调试端口或修改池。"
+      ],
+      "files": []
+    },
+    {
+      "id": 17,
+      "prompt": "Node 20 + Prisma 6，schema 的 provider 是 postgresql。已有 CPU profile 主要在大对象 JSON.stringify，接口等待明显；SQL 记录每次 4ms，已有 PostgreSQL Index Scan 计划。请做性能分析，不安装或升级依赖。",
+      "expected_output": "组合 Node 事件循环/序列化、Prisma 客户端与 PostgreSQL 方法，优先分析已有 CPU 热点和响应数据规模；不把 Index Scan 当作 MySQL key 字段缺失，不建议升级到当前 Prisma 官网版本，也不认定数据库一定是根因。",
+      "assertions": [
+        "数据库由实际 provider 确认，不因 Prisma 或 TS 默认 MySQL。",
+        "区分应用 CPU 与数据库执行，采用相应证据。",
+        "参考与实际 Prisma 6/Node 20 兼容，不强套当前官网新版本行为。"
+      ],
+      "files": []
+    },
+    {
+      "id": 18,
+      "prompt": "Django 5.2 离线片段：qs = Order.objects.filter(active=True); first = list(qs); second = list(qs)。两次使用同一 QuerySet 实例，中间没有修改，已有 SQL 日志只记录一次查询。有人按两个 list 调用报重复 SQL。请评审性能并生成报告。",
+      "expected_output": "结合 QuerySet 延迟求值与结果缓存和实际日志，纠正按调用次数认定重复 SQL 的结论；若讨论列表拷贝或内存成本需结合结果规模，不虚构 N+1 或性能故障。不同 ORM/session 的规则不得直接迁移到 Django。",
+      "assertions": [
+        "区分 ORM 调用、QuerySet 求值和真实 SQL 执行。",
+        "与已提供的一次 SQL 证据一致，不误报两次数据库查询。",
+        "未无条件加入 JOIN、缓存或索引修复。"
+      ],
+      "files": []
+    },
+    {
+      "id": 19,
+      "prompt": "React 客户端页面交互卡顿，已有浏览器记录显示点击后主线程脚本 300ms、布局 150ms，API 响应 20ms。该前端包没有数据库，服务端代码不在本次范围。请做项目性能检查，只写报告。",
+      "expected_output": "采用浏览器交互、脚本/渲染和布局证据，结合需要的已有组件 profile 分析；不把 API 20ms 当页面交互总时延，不根据 render 次数批量添加 memo，不强填数据库查询和索引明细。",
+      "assertions": [
+        "选择前端性能方法且限定当前包，不转为数据库专项。",
+        "报告包含组件、方法和证据等级，不为每条问题编造 SQL。",
+        "未从记录之外推算 LCP/INP 或生产优化收益。"
+      ],
+      "files": []
+    },
+    {
+      "id": 20,
+      "prompt": "某服务只用 MongoDB 和 Redis。已有 MongoDB executionStats 导出显示 IXSCAN、totalKeysExamined=250000、totalDocsExamined=200000、nReturned=20。Redis 客户端时延 80ms，但提供的 SLOWLOG 对应命令执行只有 200 微秒。只分析这些离线记录。",
+      "expected_output": "按 Mongo 文档/索引扫描工作量解读，IXSCAN 不等于扫描成本低；Redis 统一单位后区分命令时间与客户端/网络等等待，SLOWLOG 不能解释完整端到端时延。不套 SQL JOIN、possible_keys 或 PostgreSQL buffer 命中，不自动重新执行 executionStats。",
+      "assertions": [
+        "使用 MongoDB keys/docs/返回量而非关系型表字段。",
+        "明确 Redis SLOWLOG 不包含客户端 I/O，200 微秒没有误当 200ms。",
+        "没有执行查询或修改 Redis 配置来补足离线证据。"
+      ],
+      "files": []
+    },
+    {
+      "id": 21,
+      "prompt": ".NET + EF Core + SQL Server 项目先 await context.Orders.ToListAsync()，再在内存按租户和状态过滤，数据量大；后续确实需要跟踪实体变更并 SaveChanges。请按技术栈分析性能，不修改代码。",
+      "expected_output": "分析 LINQ 翻译与物化位置、返回量和跟踪所需成本，比较把可翻译过滤下推数据库的候选，核对 provider/版本与业务语义；不无条件 AsNoTracking，不运行 MySQL/Pg 专用计划命令。",
+      "assertions": [
+        "识别过滤在物化后发生，不只是搜索 SQL 文件。",
+        "保留后续实体变更的需求，不用统一关闭跟踪掩盖问题。",
+        "数据库诊断适配 SQL Server 与实际 EF Core 版本。"
+      ],
+      "files": []
+    },
+    {
+      "id": 22,
+      "prompt": "多包仓库 apps/web 是 Next.js，services/api 是 Java + JPA + PostgreSQL，services/worker 是 Go + MySQL。本次仅排查 api 的实体加载慢，web 和 worker 不在范围。请生成性能健康报告，不改变任何服务配置。",
+      "expected_output": "按 api 实际入口确认 JPA、JVM 与 PostgreSQL 的组合，检查实体加载、SQL 数量、池和 JVM 等相关已有证据；未检查组件明确列范围，不把 worker 的 MySQL 元数据或 web 的前端指标套给 api，也不扫描或运行所有包的工具。",
+      "assertions": [
+        "按组件和调用路径选择方法，未按仓库主语言统一分析。",
+        "报告记录实际栈、版本已知/未知项、方法与缺失证据。",
+        "未检查范围没有填零问题冒充检查通过。"
+      ],
       "files": []
     }
   ]

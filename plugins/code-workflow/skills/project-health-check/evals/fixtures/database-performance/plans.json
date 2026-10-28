@@ -1,0 +1,40 @@
+{
+  "kind": "synthetic_evaluation_fixture",
+  "database": "MySQL 8.4",
+  "source": "ordinary EXPLAIN FORMAT=JSON excerpts, not EXPLAIN ANALYZE",
+  "query_id": "Q_LIST",
+  "parameters": {
+    "tenantId_type": "BIGINT",
+    "day_type": "DATE",
+    "limit": 20,
+    "offset": 100000
+  },
+  "notes": "仅保留合成估算计划的关键片段，没有实际循环次数、真实扫描数或节点耗时。",
+  "query_block": {
+    "select_id": 1,
+    "ordering_operation": {
+      "using_filesort": true,
+      "duplicates_removal": {
+        "using_temporary_table": true,
+        "nested_loop": [
+          {
+            "table": {
+              "table_name": "o",
+              "access_type": "ref",
+              "possible_keys": ["idx_orders_tenant_created"],
+              "key": "idx_orders_tenant_created",
+              "used_key_parts": ["tenant_id"],
+              "rows_examined_per_scan": 5000,
+              "filtered": 10,
+              "attached_condition": "DATE(o.created_at) = parameter"
+            }
+          },
+          {"table": {"table_name": "c", "access_type": "eq_ref", "key": "PRIMARY", "rows_examined_per_scan": 1}},
+          {"table": {"table_name": "i", "access_type": "ref", "key": "idx_items_order", "rows_examined_per_scan": 3}},
+          {"table": {"table_name": "p", "access_type": "ref", "key": "idx_payments_order", "rows_examined_per_scan": 2}},
+          {"table": {"table_name": "s", "access_type": "ref", "key": "idx_shipments_order", "rows_examined_per_scan": 2}}
+        ]
+      }
+    }
+  }
+}

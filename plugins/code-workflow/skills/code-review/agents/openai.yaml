@@ -1,0 +1,7 @@
+interface:
+  display_name: "代码评审"
+  short_description: "审查本次实现的合理性与正确性，检查是否引入新的性能问题"
+  default_prompt: "使用 $code-review 审查当前改动，重点检查实现合理性、逻辑正确性和新增性能问题。"
+
+policy:
+  allow_implicit_invocation: true

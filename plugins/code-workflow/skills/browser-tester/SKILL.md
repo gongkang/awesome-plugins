@@ -1,6 +1,6 @@
 ---
 name: browser-tester
-description: 使用 chrome-devtools MCP 进行浏览器自动化测试。像测试工程师一样发现功能和 UI 问题，自动生成精简 Bug 报告并执行修复。支持前端、后端、全栈项目的可配置深度测试。
+description: 使用 chrome-devtools MCP 测试页面功能、交互和 UI，复现并定位问题。
 origin: Custom
 ---
 

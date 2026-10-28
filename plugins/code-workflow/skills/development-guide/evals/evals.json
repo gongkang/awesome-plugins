@@ -1,0 +1,171 @@
+{
+  "skill_name": "development-guide",
+  "evaluation_notes": "行为验收场景，不是已执行的模型评测结果。涉及落盘或命令执行的案例应在独立临时工作区准备提示中的最小项目，再运行；不得把情景代码写进技能仓库。评审实际建议、改动和检查证据，不只匹配标题或措辞。",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "请为一个新建 React + TypeScript 内部管理前端给出项目结构和开发指南建议，目前只有 Vite 的默认入口。包含客户列表和订单编辑两个功能，没有服务端代码。只在对话回答，不创建文件。",
+      "expected_output": "按前端入口、业务功能及真实共享能力组织，说明两个功能的状态和请求归属；区分本地、派生和服务端状态，不生成后端 Controller/DAO 或整套空层，也不因指南请求安装工具。",
+      "assertions": [
+        "建议适用于 React 前端，保留 Vite 入口约定。",
+        "给出目录职责和依赖含义，未机械创建所有可能的目录。",
+        "遵守只在对话回答，不落盘项目指南。"
+      ],
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "评审下面的 TypeScript 库入口，给一个小范围修复建议：export function readQuantity(body: unknown) { return (body as { quantity: number }).quantity; }。库收到外部 JSON，协议要求 quantity 是正的安全整数。现有项目已经启用 strict，只要求建议。",
+      "expected_output": "识别类型断言不验证外部 JSON，给出包含对象形状和字段值的运行时校验或使用现有 schema 的方案，保留公开契约，并建议合法值、缺字段、null、错误类型、非正数和非安全整数的行为用例。",
+      "assertions": [
+        "没有把 strict、类型断言或泛型当成运行时校验。",
+        "建议实际处理 body 为 null、非对象及 quantity 值不合法的情况。",
+        "修复围绕输入边界，没有引入与该需求无关的类或框架。"
+      ],
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "新建一个可安装的 Python 3.9 命令行包，负责读取本地文件并计算业务汇总。请给目录、类型、资源管理和验证建议，先不要创建文件。项目还没有选择检查工具。",
+      "expected_output": "给出适合安装包的 src 布局和测试位置，说明安装和入口方式，类型语法兼容 Python 3.9，文件明确关闭；不通过 sys.path 补丁掩盖打包问题，不编造已配置工具或替用户安装。",
+      "assertions": [
+        "区分安装包与一次性脚本的结构需求。",
+        "类型注解不被视为输入运行时校验。",
+        "没有默认使用 Python 3.10 的联合语法或 Python 3.12 的 type 声明。"
+      ],
+      "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "一个 Go HTTP 服务已经用 cmd/server 和 internal/orders 组织。现在每个请求都会 go func() { client.Fetch(context.Background()) }()，不等待、不返回错误。请评审并给建议，需求是请求取消时也停止下游工作。",
+      "expected_output": "围绕取消、超时、等待和错误归属修正实际任务生命周期，保持现有 Go 包结构，说明并发上限和资源清理的适用点；不机械引入 Java 层次或全局后台任务管理框架。",
+      "assertions": [
+        "识别 Background 丢失请求取消语义和无人接收错误的问题。",
+        "方案明确由谁等待和取消 goroutine。",
+        "验证建议包含取消、下游失败及正常成功。"
+      ],
+      "files": []
+    },
+    {
+      "id": 5,
+      "prompt": "新建 Java 17、Spring Boot 3 的订单服务，使用 Maven。订单和库存是两个业务能力，订单会调用库存公开服务。希望参考阿里巴巴研发规范，先给结构和依赖设计，不创建项目。",
+      "expected_output": "以黄山版 1.7.1 为主要参考，按业务能力说明包与契约，保持标准构建目录；模块内部按实际职责分层，暴露服务场景采用相应接口，Manager 和构建子模块按需要增加。来源等级、Spring 建议和本指南落地方式区分清楚。",
+      "assertions": [
+        "来源为官方黄山版，不拿旧 GitBook 当最新版。",
+        "订单不直接操作库存内部表或实现。",
+        "不称手册强制要求唯一目录树，也不为所有内部类生成接口。"
+      ],
+      "files": []
+    },
+    {
+      "id": 6,
+      "prompt": "旧 Java 项目 CONTRIBUTING 明确采用两空格，现有 formatter 也如此；代码按 controller/service/dao 组织，类注释不记录作者日期。本次仅修复一个方法，要求参考阿里巴巴手册，不要大规模重构。应该如何处理这些差异？",
+      "expected_output": "保持本次改动范围和项目既有配置，明确手册四空格、类创建者日期等条款与项目约定的差异；保留来源等级而不伪造作者信息。80 行方法限制按推荐解释，不擅改 formatter、目录或项目门槛。",
+      "assertions": [
+        "清楚区分项目采用方式与手册原文等级。",
+        "没有自动迁移目录、全项目格式化或伪造类创建信息。",
+        "80 行建议没有被表述为跨语言强制要求。"
+      ],
+      "files": []
+    },
+    {
+      "id": 7,
+      "prompt": "请按开发指南评审以下 Java 方法，不修改代码。CUSTOMER 是静态 ThreadLocal：void process(List<String> names) { CUSTOMER.set(\"tenant-a\"); try { for (String name : names) { if (name.isEmpty()) { names.remove(name); } } } catch (Exception ignored) {} }。另有金额判断 new BigDecimal(\"2.0\").equals(new BigDecimal(\"2.00\"))，业务要比较数值相等。",
+      "expected_output": "指出遍历时直接结构修改集合、ThreadLocal 缺少清理、吞异常及 BigDecimal 数值比较问题，给出对应黄山版章节、条款和强制等级；建议迭代器或合适的过滤、finally 清理、保留错误语义及 compareTo，说明空值和不可变集合需要按原契约判断。",
+      "assertions": [
+        "识别四个实际问题，不只输出通用整洁代码建议。",
+        "定位集合处理 14、并发处理 6、异常处理 4 和 OOP 10，保留原强制等级。",
+        "不将日志记录一次等同于已经恢复业务成功。"
+      ],
+      "files": []
+    },
+    {
+      "id": 8,
+      "prompt": "Java 21 服务使用 Executors.newVirtualThreadPerTaskExecutor() 并按作用域关闭执行器。有人说阿里巴巴规范禁止 Executors，所以必须换成固定大小 ThreadPoolExecutor。请评审此建议。项目没有安装 P3C。",
+      "expected_output": "区分黄山版传统平台线程规则与 JDK 21 虚拟线程的官方使用方式，核对实际任务和资源边界，不机械替换 API 或池化虚拟线程；明确补充依据来自 JDK，不篡改手册原等级，也不自动安装 P3C。",
+      "assertions": [
+        "没有将所有 Executors API 一概视为虚拟线程场景违规。",
+        "保留任务并发限制与执行器生命周期的实际审查。",
+        "现代 JDK 依据和阿里巴巴原文分别标注。"
+      ],
+      "files": []
+    },
+    {
+      "id": 9,
+      "prompt": "Java + MyBatis + MySQL 项目评审：查询映射中 SELECT * FROM orders WHERE customer_id = ${customerId}，参数来自请求；另外分页统计使用 SELECT COUNT(*) FROM orders。请按指南指出问题，现有表已经有外键，不允许改表。",
+      "expected_output": "针对 MySQL 加载相关条款，识别查询列通配符及值参数字符串替换问题；建议明确查询列和参数绑定。COUNT(*) 不被误报为禁止的 SELECT *。原文外键限制与现有表的差异可说明，但不建议擅自删除约束或执行迁移。",
+      "assertions": [
+        "区分 ORM 查询字段规则与 SQL 行计数规则。",
+        "明确 customerId 应作为值绑定而非原样拼接。",
+        "遵守不改表，未执行数据订正或迁移。"
+      ],
+      "files": []
+    },
+    {
+      "id": 10,
+      "prompt": "Java 库只使用 PostgreSQL，已有 schema 和迁移工具。本次只是修复日期模式 YYYY-MM-dd 的跨年问题，请按开发指南给出建议。",
+      "expected_output": "聚焦年份/周年份语义和跨年用例，保持目标 JDK 与现有日期接口兼容；不加载或强套 MySQL 字段类型、is_ 命名、禁止外键等专属条款，不擅改 schema。",
+      "assertions": [
+        "建议验证跨年边界，区分 yyyy 和 YYYY。",
+        "未把 MySQL 惯例推广到 PostgreSQL。",
+        "没有因局部修复升级 JDK 或迁移日期体系。"
+      ],
+      "files": []
+    },
+    {
+      "id": 11,
+      "prompt": "TypeScript Node 项目中，orders/service.ts 直接导入 payments/internal/sql.ts，payments 又从 orders/service.ts 导入折扣规则。计划把两个文件搬到 common 来解决循环。请评审并给最小改进方案，只讨论。",
+      "expected_output": "判断付款与折扣规则的数据及业务归属，使用支付公开能力和明确的依赖方向；说明简单搬进 common 不能证明边界合理。给出可验证的最小调整，不默认引入事件总线、微服务或通用框架。",
+      "assertions": [
+        "指出循环和跨内部实现访问两个问题。",
+        "方案明确规则归属、公开契约和组装位置。",
+        "提出行为保持及依赖关系的验证方式。"
+      ],
+      "files": []
+    },
+    {
+      "id": 12,
+      "prompt": "请更新这个 TS 项目的开发指南。已有 docs/engineering.md 承载人工维护的开发约定，AGENTS.md 已链接它；package.json scripts 只有 lint: eslint . 和 test: vitest run，没有 typecheck 脚本。不要改 AGENTS.md，也不要安装工具。",
+      "expected_output": "检查并原位更新 docs/engineering.md，保留有效人工约定；验证命令来自实际 scripts，不虚构 typecheck，不创建重复的 docs/development-guide.md，不改项目指令或 CI。",
+      "assertions": [
+        "交付现有指南路径且未创建重复规范文档。",
+        "保留现有内容并明确新增建议与事实的差别。",
+        "未宣称运行不存在的 typecheck 或自动安装依赖。"
+      ],
+      "files": []
+    },
+    {
+      "id": 13,
+      "prompt": "Python 项目已修复一个输入校验缺陷。现有测试命令是 pytest tests/test_input.py，但当前环境缺少 pytest；没有配置类型检查。请按开发指南交付，不安装依赖。",
+      "expected_output": "如实说明测试由于缺少依赖未能执行、类型检查未配置，交付已完成的实际验证及剩余缺口；保留能发现该输入缺陷的测试建议，不把环境阻碍描述为代码失败或全部通过。",
+      "assertions": [
+        "清楚区分测试未执行、测试失败和未配置检查。",
+        "没有安装依赖或编造测试输出。",
+        "验证建议涉及缺陷的输入行为而非仅检查函数存在。"
+      ],
+      "files": []
+    },
+    {
+      "id": 14,
+      "prompt": "多包仓库中 apps/web 是 Next.js TS 前端，services/worker 是 Python 3.9，tools/reconcile 是单文件 JavaScript 脚本。本次只修 reconcile 的重试逻辑，不要改其他包，也不生成指南。",
+      "expected_output": "围绕 JS 脚本实际运行时、有限重试、幂等与错误语义开展小范围修复和验证；不迁移 TS，不套入前后端分层，不运行无关包命令，不生成文档或加载所有语言资料。",
+      "assertions": [
+        "范围限定于脚本及其真实测试依赖。",
+        "重试条件和重复副作用处理有明确依据。",
+        "不将根目录或其他包的框架设置套给脚本。"
+      ],
+      "files": []
+    },
+    {
+      "id": 15,
+      "prompt": "请为新 Java 项目制定开发指南，目前没有既有文档。项目采用黄山版参考，单测框架已配置，暂未设置覆盖率门槛。需要指南文档，不需要建设 CI 或修改项目指令。",
+      "expected_output": "在 docs/development-guide.md 生成基于真实配置的指南，保留外部来源版本、等级和适用条件；说明覆盖率 70% 及核心模块 100% 是原文推荐目标，按项目情况采纳，不将其升级为强制或自动改 CI。",
+      "assertions": [
+        "默认路径正确，目录不存在时创建。",
+        "包含目录职责、依赖规则、简短示例和实际检查命令，未知事实明确标记。",
+        "没有新建审批流程、修改 AGENTS.md/CLAUDE.md 或设置未经要求的质量门槛。"
+      ],
+      "files": []
+    }
+  ]
+}

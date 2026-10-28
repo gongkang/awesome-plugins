@@ -1,0 +1,7 @@
+interface:
+  display_name: "开发指南"
+  short_description: "面向 TS/JS、Python、Java 与 Go 的项目结构、可读性及模块设计指南"
+  default_prompt: "使用 $development-guide，结合当前项目约定指导本次开发，并运行现有检查验证改动。"
+
+policy:
+  allow_implicit_invocation: true

@@ -14,47 +14,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 当前插件：
 
-- `code-workflow`：代码项目开发流程技能集合（API 文档、API E2E、浏览器测试、代码库 Wiki、项目健康检查）。
-- `computer-use`：电脑/屏幕使用相关技能集合（屏幕控制、屏幕监控、GUI 操作、截图感知）。
+- `code-workflow`：代码项目开发流程技能集合（代码评审、开发指南、API 文档、API E2E、浏览器测试、代码库 Wiki、项目健康检查）。
 - `search`：搜索与资料聚合技能集合，当前包含 AI 对话网站聚合搜索。
 - `notes`：笔记整理与美化命令集合，当前包含 Markdown 笔记美化 slash command。
 
 ## 常用命令
 
 本仓库没有根目录级 package/build/lint 配置；大部分内容是 Markdown 技能、JSON 清单和少量 Python 辅助脚本。运行命令前先在相关技能目录确认是否存在自己的配置。
-
-### screen-control 本地脚本
-
-从技能目录运行更直观，脚本内部也会切到自身所在目录。
-
-```bash
-cd plugins/computer-use/skills/screen-control/scripts
-python3 sensor.py snapshot --output /tmp/frame.png
-python3 sensor.py wait --for stable --timeout 15
-python3 control.py locate "搜索按钮"
-python3 control.py smart-click "发送按钮"
-python3 control.py type "你好"
-```
-
-依赖来自 `plugins/computer-use/skills/screen-control/pyproject.toml`。可选能力：
-
-- `vision` extra 使用 OpenAI 兼容多模态定位，读取 `OPENAI_API_KEY`、`OPENAI_MODEL`、`OPENAI_BASE_URL` 或用户 `~/.env`。
-- `ocr` extra 需要 `pytesseract`，macOS 还需要系统 `tesseract`。
-- `macos` extra 提供 Accessibility API 所需的 PyObjC 依赖。
-
-### screen-monitor 本地脚本
-
-```bash
-cd plugins/computer-use/skills/screen-monitor/scripts
-python3 monitor.py start --fps 5 --buffer 10
-python3 monitor.py status
-python3 monitor.py keyframe --output /tmp/check.png
-python3 monitor.py wait-change --timeout 60 --output /tmp/changed.png
-python3 monitor.py wait-stable --timeout 30
-python3 monitor.py stop
-```
-
-该脚本使用 `/tmp/screen_monitor_state.json`、`/tmp/screen_monitor.pid`、`/tmp/screen_monitor_frames` 保存运行状态和帧。
 
 ### generate-codebase-wiki 辅助脚本
 
@@ -79,7 +45,6 @@ Claude Code：
 ```bash
 /plugin marketplace add gongkang/awesome-plugins
 /plugin install code-workflow@awesome-plugins
-/plugin install computer-use@awesome-plugins
 /plugin install search@awesome-plugins
 /plugin install notes@awesome-plugins
 ```
@@ -91,7 +56,7 @@ codex plugin marketplace add gongkang/awesome-plugins
 codex plugin marketplace upgrade awesome-plugins
 ```
 
-当前 Codex marketplace 发布 `code-workflow`、`computer-use`、`search`；`notes` 目前只有 Claude Code slash command，暂不加入 Codex marketplace。
+当前 Codex marketplace 发布 `code-workflow`、`search`；`notes` 目前只有 Claude Code slash command，暂不加入 Codex marketplace。
 
 ### 插件结构验证命令
 
@@ -147,17 +112,8 @@ Claude Code manifest 中，`commands` / `skills` 字段使用数组形式（例�
 
 `plugins/code-workflow` 是项目开发流程技能插件，没有命令。技能分为两类：
 
-- 纯指令技能：`api-doc-generator`、`api-e2e-test`、`browser-tester`、`project-health-check` 主要由 `SKILL.md` 描述工作流、约束和输出格式。
+- 纯指令技能：`api-doc-generator`、`api-e2e-test`、`browser-tester`、`code-review`、`development-guide`、`project-health-check` 主要由 `SKILL.md` 描述工作流、约束和输出格式。`code-review` 面向日常 diff，只读评审、按需少量验证并直接在对话返回发现；`development-guide` 指导开发及指南符合性评审，`project-health-check` 用于项目或指定领域健康评估。`development-guide` 的 `references/` 提供设计、验证和 TS/JS、Python、Java、Go 实践；Java 以阿里巴巴黄山版 1.7.1 为主要参考，MySQL 条款单独按需读取。
 - 带辅助脚本的技能：`generate-codebase-wiki` 除 `SKILL.md` 外还有 `scripts/prepare_wiki_output.py`、`scripts/repo_snapshot.py` 和 `references/page-templates.md`。脚本是跨项目生成 Wiki 时的安全准备、快照和清单工具。
-
-### computer-use
-
-`plugins/computer-use` 是电脑/屏幕使用技能插件，当前包含：
-
-- `skills/screen-control`：按需截图、定位和 GUI 操作技能。核心脚本在 `scripts/control.py`、`scripts/sensor.py`、`scripts/locators.py`，共享工具在 `scripts/utils/`。
-- `skills/screen-monitor`：持续录屏、变化检测和等待条件技能。核心脚本在 `scripts/monitor.py`，与 `screen-control` 共享相似的检测工具模式。
-
-`screen-control` 与 `screen-monitor` 的分工：前者执行一次性 GUI 检查/点击/输入/打开应用等操作；后者持续观察屏幕、等待变化/稳定/文字出现或录制过程。
 
 ### search
 
