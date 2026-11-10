@@ -4,19 +4,20 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 项目定位
 
-这是 `gongkang/awesome-plugins` 插件市场仓库，同时面向 Claude Code 和 Codex 发布插件集合。
+这是 `gongkang/awesome-plugins` 插件仓库，面向 Claude Code、Codex 和 Antigravity 维护插件集合，其中 Claude Code 和 Codex 提供市场清单。
 
 - Claude Code 市场清单：`.claude-plugin/marketplace.json`
 - Codex 市场清单：`.agents/plugins/marketplace.json`
 - 插件源码：`plugins/<plugin-name>/`
 - Claude Code 插件清单：`plugins/<plugin-name>/.claude-plugin/plugin.json`
 - Codex 插件清单：`plugins/<plugin-name>/.codex-plugin/plugin.json`
+- Antigravity 插件清单：`plugins/<plugin-name>/.antigravity-plugin/plugin.json`
 
 当前插件：
 
 - `code-workflow`：代码项目开发流程技能集合（代码评审、开发指南、API 文档、API E2E、浏览器测试、代码库 Wiki、项目健康检查）。
 - `search`：搜索与资料聚合技能集合，当前包含 AI 对话网站聚合搜索。
-- `notes`：笔记整理与美化命令集合，当前包含 Markdown 笔记美化 slash command。
+- `notes`：笔记整理与美化能力集合，包含 Claude Code 的 Markdown 笔记美化 slash command，以及供 Codex 和 Antigravity 使用的同名技能。
 
 ## 常用命令
 
@@ -56,7 +57,7 @@ codex plugin marketplace add gongkang/awesome-plugins
 codex plugin marketplace upgrade awesome-plugins
 ```
 
-当前 Codex marketplace 发布 `code-workflow`、`search`；`notes` 目前只有 Claude Code slash command，暂不加入 Codex marketplace。
+当前 Codex marketplace 发布 `code-workflow`、`search`、`notes`。
 
 ### 插件结构验证命令
 
@@ -68,7 +69,7 @@ python3 -m json.tool .claude-plugin/marketplace.json >/dev/null
 python3 -m json.tool .agents/plugins/marketplace.json >/dev/null
 
 # 验证所有插件 manifest JSON
-for file in plugins/*/.claude-plugin/plugin.json plugins/*/.codex-plugin/plugin.json; do
+for file in plugins/*/.claude-plugin/plugin.json plugins/*/.codex-plugin/plugin.json plugins/*/.antigravity-plugin/plugin.json; do
   python3 -m json.tool "$file" >/dev/null
 done
 
@@ -76,7 +77,7 @@ done
 python3 - <<'PY'
 import json
 from pathlib import Path
-for pattern in ("*/.claude-plugin/plugin.json", "*/.codex-plugin/plugin.json"):
+for pattern in ("*/.claude-plugin/plugin.json", "*/.codex-plugin/plugin.json", "*/.antigravity-plugin/plugin.json"):
     for path in sorted(Path("plugins").glob(pattern)):
         plugin_dir = path.parents[1].name
         data = json.loads(path.read_text())
@@ -94,19 +95,29 @@ PY
 - `.claude-plugin/marketplace.json` 使用 Claude Code marketplace schema，插件条目通过 `source: "./plugins/<name>"` 指向本仓库插件目录。
 - `.agents/plugins/marketplace.json` 是 Codex 兼容市场清单，插件条目通过 `source.path: "./plugins/<name>"` 指向同一插件目录。
 
-新增、重命名或删除插件时，需要同步更新这两个市场清单，并同步维护插件内部的 `.claude-plugin/plugin.json` 与 `.codex-plugin/plugin.json`。
+新增、重命名或删除插件时，需要同步更新这两个市场清单，并同步维护插件内部的 `.claude-plugin/plugin.json`、`.codex-plugin/plugin.json` 与 `.antigravity-plugin/plugin.json`。
+
+### 新增插件兼容性检查项
+
+新增插件必须同时兼容 Claude Code、Codex 和 Antigravity：
+
+- 创建三端 manifest，保持 `name`、`version`、`author` 一致；Antigravity 清单统一放在 `.antigravity-plugin/plugin.json`，包含 `displayName` 和 `suggestedPrompts`。
+- 通用能力放在 `skills/<skill-name>/SKILL.md`，供各端复用；如提供 Claude Code command，同时提供对应 Skill，让 Codex 和 Antigravity 也能使用。
+- 同步更新 Claude Code、Codex 两个市场清单及 README 插件列表、目录结构。
+- 运行插件结构验证，确认三端 manifest 的 JSON 格式、插件名称与技能路径正确。
 
 ### 插件目录结构
 
-每个插件位于 `plugins/<plugin-name>/`，遵循 Claude Code 插件约定：
+每个插件位于 `plugins/<plugin-name>/`，按平台维护清单并共享技能目录：
 
 - `.claude-plugin/plugin.json`：Claude Code 插件 manifest。
 - `.codex-plugin/plugin.json`：Codex 兼容 manifest。
+- `.antigravity-plugin/plugin.json`：Antigravity manifest，包含展示名称和建议提示词。
 - `commands/`：slash command Markdown 文件（目前 `notes` 使用）。
 - `skills/<skill-name>/SKILL.md`：技能定义。技能的脚本、参考资料、eval 放在该技能目录下的 `scripts/`、`references/`、`evals/` 等子目录。
 - 当前仓库没有插件级 hooks 或 MCP server 配置。
 
-Claude Code manifest 中，`commands` / `skills` 字段使用数组形式（例如 `['./skills/']`）；Codex manifest 中，`skills` 使用相对插件根目录的字符串路径（例如 `"./skills/"`）。
+Claude Code manifest 中，`commands` / `skills` 字段使用数组形式（例如 `['./skills/']`）；Codex manifest 中，`skills` 使用相对插件根目录的字符串路径（例如 `"./skills/"`）；Antigravity 按 `skills/<skill-name>/SKILL.md` 发现技能，清单中无需配置 `skills`。
 
 ### code-workflow
 
@@ -123,13 +134,14 @@ Claude Code manifest 中，`commands` / `skills` 字段使用数组形式（例�
 
 ### notes
 
-`plugins/notes` 是笔记整理与美化命令插件，当前包含：
+`plugins/notes` 是笔记整理与美化插件，当前包含：
 
 - `commands/beautify-notes.md`：Markdown 笔记美化 slash command。
+- `skills/beautify-notes/SKILL.md`：供 Codex 和 Antigravity 使用的 Markdown 笔记美化技能，与 Claude Code 命令保持相同的格式整理规则。
 
 ## 编辑注意事项
 
 - 修改技能触发条件时，优先编辑对应 `SKILL.md` 的 frontmatter `description`；这是技能是否被自动选择的关键字段。
-- 修改插件能力、路径或元数据时，同时检查 Claude Code 与 Codex 两份 manifest，避免市场信息不一致。
+- 修改插件能力、路径或元数据时，同时检查 Claude Code、Codex 与 Antigravity 三份 manifest，避免平台信息不一致。
 - 技能内引用辅助脚本或参考文件时，使用相对技能目录的路径并保持目录自包含；不要依赖仓库根目录作为运行时工作目录。
 - 不要提交本地缓存和运行产物：`.claude/`、`*.local.json`、`.pytest_cache/`、`__pycache__/`、`.DS_Store`、`node_modules/`、`.venv/` 已在 `.gitignore` 中列出。

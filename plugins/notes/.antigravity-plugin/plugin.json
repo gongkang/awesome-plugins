@@ -1,0 +1,14 @@
+{
+  "name": "notes",
+  "displayName": "Notes",
+  "version": "1.0.0",
+  "description": "笔记整理与 Markdown 笔记美化技能集合。",
+  "author": {
+    "name": "gongkang"
+  },
+  "homepage": "https://github.com/gongkang/awesome-plugins",
+  "repository": "https://github.com/gongkang/awesome-plugins",
+  "suggestedPrompts": [
+    "美化指定的 Markdown 笔记文档"
+  ]
+}

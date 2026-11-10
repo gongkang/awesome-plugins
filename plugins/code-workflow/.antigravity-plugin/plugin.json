@@ -1,0 +1,16 @@
+{
+  "name": "code-workflow",
+  "displayName": "Code Workflow",
+  "version": "1.0.0",
+  "description": "代码项目评审、开发指南、文档、测试、Wiki 与健康检查技能集合。",
+  "author": {
+    "name": "gongkang"
+  },
+  "homepage": "https://github.com/gongkang/awesome-plugins",
+  "repository": "https://github.com/gongkang/awesome-plugins",
+  "suggestedPrompts": [
+    "使用 code-review 审查当前改动",
+    "使用 development-guide 为当前项目制定开发指南",
+    "使用 project-health-check 对当前项目做一次标准健康检查"
+  ]
+}

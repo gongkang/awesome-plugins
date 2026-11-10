@@ -1,0 +1,15 @@
+{
+  "name": "search",
+  "displayName": "Search",
+  "version": "1.0.0",
+  "description": "搜索与资料聚合技能集合，提供 AI 对话网站聚合搜索能力。",
+  "author": {
+    "name": "gongkang"
+  },
+  "homepage": "https://github.com/gongkang/awesome-plugins",
+  "repository": "https://github.com/gongkang/awesome-plugins",
+  "suggestedPrompts": [
+    "使用对话搜索综合多个 AI 的答案",
+    "去 AI 网站问一下这个技术方案的优缺点"
+  ]
+}

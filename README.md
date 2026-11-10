@@ -1,6 +1,6 @@
 # Awesome Plugins
 
-Claude Code 与 Codex 插件市场
+Claude Code、Codex 与 Antigravity 插件集合
 
 [https://github.com/gongkang/awesome-plugins](https://github.com/gongkang/awesome-plugins)
 
@@ -15,6 +15,8 @@ awesome-plugins/
 │   └── marketplace.json           # Claude Code 市场清单
 ├── plugins/
 │   ├── code-workflow/             # 代码项目开发流程技能
+│   │   ├── .antigravity-plugin/
+│   │   │   └── plugin.json
 │   │   ├── .codex-plugin/
 │   │   │   └── plugin.json
 │   │   ├── .claude-plugin/
@@ -28,19 +30,26 @@ awesome-plugins/
 │   │       ├── generate-codebase-wiki/
 │   │       └── project-health-check/
 │   ├── search/                    # 搜索与资料聚合技能
+│   │   ├── .antigravity-plugin/
+│   │   │   └── plugin.json
 │   │   ├── .codex-plugin/
 │   │   │   └── plugin.json
 │   │   ├── .claude-plugin/
 │   │   │   └── plugin.json
 │   │   └── skills/
 │   │       └── ai-dialog-search/
-│   └── notes/                     # 笔记整理与美化命令
+│   └── notes/                     # 笔记整理与美化能力
+│       ├── .antigravity-plugin/
+│       │   └── plugin.json
 │       ├── .codex-plugin/
 │       │   └── plugin.json
 │       ├── .claude-plugin/
 │       │   └── plugin.json
-│       └── commands/
-│           └── beautify-notes.md
+│       ├── commands/
+│       │   └── beautify-notes.md
+│       └── skills/
+│           └── beautify-notes/
+│               └── SKILL.md
 └── README.md
 ```
 
@@ -50,7 +59,7 @@ awesome-plugins/
 |------|------|----------|
 | `code-workflow` | 代码项目开发流程技能集合 | api-doc-generator, api-e2e-test, browser-tester, code-review, development-guide, generate-codebase-wiki, project-health-check |
 | `search` | 搜索与资料聚合技能集合 | ai-dialog-search |
-| `notes` | 笔记整理与美化命令集合 | beautify-notes |
+| `notes` | 笔记整理与美化能力集合 | beautify-notes（Claude Code 命令及 Codex、Antigravity 技能） |
 
 `code-review`（代码评审）用于日常改完代码后的轻量检查，默认审查全部未提交改动和未忽略的新文件；静态优先，必要时少量验证，直接在对话返回发现，不自动修复或生成报告。
 
@@ -99,4 +108,10 @@ Codex 兼容入口：
 - Repo 级市场清单：`.agents/plugins/marketplace.json`
 - 插件清单：`plugins/<plugin-name>/.codex-plugin/plugin.json`
 - 插件内容路径：`skills` 使用相对插件根目录的 `./skills/`
-- 当前 Codex marketplace 发布 `code-workflow`、`search`；`notes` 目前只有 Claude Code slash command，暂不加入 Codex marketplace。
+- 当前 Codex marketplace 发布 `code-workflow`、`search`、`notes`。
+
+### Antigravity
+
+三个插件均使用 `plugins/<plugin-name>/.antigravity-plugin/plugin.json` 作为插件清单，包含 `displayName`、`suggestedPrompts` 等元数据。
+
+Antigravity 按插件根目录下的 `skills/<skill-name>/SKILL.md` 发现技能：`code-workflow` 提供 7 个技能，`search` 提供 `ai-dialog-search`，`notes` 提供 `beautify-notes`。
