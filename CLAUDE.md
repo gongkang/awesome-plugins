@@ -15,7 +15,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 当前插件：
 
-- `code-workflow`：代码项目开发流程技能集合（代码评审、开发指南、API 文档、API E2E、浏览器测试、代码库 Wiki、项目健康检查）。
+- `code-workflow`：代码项目开发流程技能集合（代码评审、开发指南、API 文档、API E2E、代码库 Wiki、项目健康检查）。
 - `search`：搜索与资料聚合技能集合，当前包含 AI 对话网站聚合搜索。
 - `notes`：笔记整理与美化能力集合，包含 Claude Code 的 Markdown 笔记美化 slash command，以及供 Codex 和 Antigravity 使用的同名技能。
 
@@ -123,7 +123,7 @@ Claude Code manifest 中，`commands` / `skills` 字段使用数组形式（例�
 
 `plugins/code-workflow` 是项目开发流程技能插件，没有命令。技能分为两类：
 
-- 纯指令技能：`api-doc-generator`、`api-e2e-test`、`browser-tester`、`code-review`、`development-guide`、`project-health-check` 主要由 `SKILL.md` 描述工作流、约束和输出格式。`code-review` 面向日常 diff，只读评审、按需少量验证并直接在对话返回发现；`development-guide` 指导开发及指南符合性评审，`project-health-check` 用于项目或指定领域健康评估。`development-guide` 的 `references/` 提供设计、验证和 TS/JS、Python、Java、Go 实践；Java 以阿里巴巴黄山版 1.7.1 为主要参考，MySQL 条款单独按需读取。
+- 纯指令技能：`api-doc-generator`、`api-e2e-test`、`code-review`、`development-guide`、`project-health-check` 主要由 `SKILL.md` 描述工作流、约束和输出格式。`code-review` 面向日常 diff，只读评审、按需少量验证并直接在对话返回发现；`development-guide` 指导开发及指南符合性评审，`project-health-check` 用于项目或指定领域健康评估。`development-guide` 的 `references/` 提供设计、验证和 TS/JS、Python、Java、Go 实践；Java 以阿里巴巴黄山版 1.7.1 为主要参考，MySQL 条款单独按需读取。
 - 带辅助脚本的技能：`generate-codebase-wiki` 除 `SKILL.md` 外还有 `scripts/prepare_wiki_output.py`、`scripts/repo_snapshot.py` 和 `references/page-templates.md`。脚本是跨项目生成 Wiki 时的安全准备、快照和清单工具。
 
 ### search

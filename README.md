@@ -24,7 +24,6 @@ awesome-plugins/
 │   │   └── skills/
 │   │       ├── api-doc-generator/
 │   │       ├── api-e2e-test/
-│   │       ├── browser-tester/
 │   │       ├── code-review/
 │   │       ├── development-guide/
 │   │       ├── generate-codebase-wiki/
@@ -57,7 +56,7 @@ awesome-plugins/
 
 | 插件 | 描述 | 当前能力 |
 |------|------|----------|
-| `code-workflow` | 代码项目开发流程技能集合 | api-doc-generator, api-e2e-test, browser-tester, code-review, development-guide, generate-codebase-wiki, project-health-check |
+| `code-workflow` | 代码项目开发流程技能集合 | api-doc-generator, api-e2e-test, code-review, development-guide, generate-codebase-wiki, project-health-check |
 | `search` | 搜索与资料聚合技能集合 | ai-dialog-search |
 | `notes` | 笔记整理与美化能力集合 | beautify-notes（Claude Code 命令及 Codex、Antigravity 技能） |
 
@@ -114,4 +113,4 @@ Codex 兼容入口：
 
 三个插件均使用 `plugins/<plugin-name>/.antigravity-plugin/plugin.json` 作为插件清单，包含 `displayName`、`suggestedPrompts` 等元数据。
 
-Antigravity 按插件根目录下的 `skills/<skill-name>/SKILL.md` 发现技能：`code-workflow` 提供 7 个技能，`search` 提供 `ai-dialog-search`，`notes` 提供 `beautify-notes`。
+Antigravity 按插件根目录下的 `skills/<skill-name>/SKILL.md` 发现技能：`code-workflow` 提供 6 个技能，`search` 提供 `ai-dialog-search`，`notes` 提供 `beautify-notes`。
