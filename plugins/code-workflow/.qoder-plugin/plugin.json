@@ -1,0 +1,25 @@
+{
+  "name": "code-workflow",
+  "displayName": "Code Workflow",
+  "version": "1.0.0",
+  "description": "代码项目评审、开发指南、文档、测试、Wiki 与健康检查技能集合。",
+  "author": {
+    "name": "gongkang"
+  },
+  "homepage": "https://github.com/gongkang/awesome-plugins",
+  "repository": "https://github.com/gongkang/awesome-plugins",
+  "license": "MIT",
+  "keywords": [
+    "qoder-plugin",
+    "code",
+    "code-review",
+    "development",
+    "development-guide",
+    "testing",
+    "documentation",
+    "wiki",
+    "health-check",
+    "workflow"
+  ],
+  "skills": "./skills/"
+}

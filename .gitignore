@@ -26,3 +26,8 @@ node_modules/
 # Python
 .pytest_cache/
 __pycache__/
+
+# Mutagen
+mutagen.yml
+mutagen.yml.lock
+
