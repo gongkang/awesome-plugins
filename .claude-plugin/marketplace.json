@@ -10,7 +10,7 @@
     {
       "name": "code-workflow",
       "source": "./plugins/code-workflow",
-      "description": "代码项目开发流程技能集合",
+      "description": "代码项目开发流程技能集合，包含方案追问",
       "version": "1.0.0",
       "author": {
         "name": "gongkang"

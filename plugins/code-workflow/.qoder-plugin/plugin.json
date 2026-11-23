@@ -2,7 +2,7 @@
   "name": "code-workflow",
   "displayName": "Code Workflow",
   "version": "1.0.0",
-  "description": "代码项目评审、开发指南、文档、测试、Wiki 与健康检查技能集合。",
+  "description": "方案追问、代码评审、开发指南、文档、测试、Wiki 与健康检查技能集合。",
   "author": {
     "name": "gongkang"
   },

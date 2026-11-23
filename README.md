@@ -27,6 +27,7 @@ awesome-plugins/
 │   │       ├── code-review/
 │   │       ├── development-guide/
 │   │       ├── generate-codebase-wiki/
+│   │       ├── grilling/
 │   │       └── project-health-check/
 │   ├── search/                    # 搜索与资料聚合技能
 │   │   ├── .antigravity-plugin/
@@ -56,7 +57,7 @@ awesome-plugins/
 
 | 插件 | 描述 | 当前能力 |
 |------|------|----------|
-| `code-workflow` | 代码项目开发流程技能集合 | api-doc-generator, api-e2e-test, code-review, development-guide, generate-codebase-wiki, project-health-check |
+| `code-workflow` | 代码项目开发流程技能集合 | api-doc-generator, api-e2e-test, code-review, development-guide, generate-codebase-wiki, grilling, project-health-check |
 | `search` | 搜索与资料聚合技能集合 | ai-dialog-search |
 | `notes` | 笔记整理与美化能力集合 | beautify-notes（Claude Code 命令及 Codex、Antigravity 技能） |
 
@@ -64,12 +65,15 @@ awesome-plugins/
 
 `development-guide`（开发指南）支持 TS/JS、Python、Java、Go 的项目结构、可读性、模块设计和质量验证，Java 主要参考阿里巴巴《Java 开发手册（黄山版）》1.7.1。既可指导本次开发，也可按要求制定项目指南；旧项目在本次改动范围内渐进改善，复用现有检查工具。
 
+`grilling`（方案追问）按决策依赖分轮提问，每题给出推荐选项和理由，直到关键取舍得到确认。
+
 使用示例：
 
 ```text
 使用 $code-review 审查当前改动。
 使用 $development-guide 实现这个功能，保持现有模块边界并运行相关检查。
 使用 $development-guide 为当前项目制定开发指南，Java 部分参考阿里巴巴手册。
+使用 $grilling 追问这个方案，帮我确认关键取舍。
 ```
 
 ## 安装
@@ -113,4 +117,4 @@ Codex 兼容入口：
 
 三个插件均使用 `plugins/<plugin-name>/.antigravity-plugin/plugin.json` 作为插件清单，包含 `displayName`、`suggestedPrompts` 等元数据。
 
-Antigravity 按插件根目录下的 `skills/<skill-name>/SKILL.md` 发现技能：`code-workflow` 提供 6 个技能，`search` 提供 `ai-dialog-search`，`notes` 提供 `beautify-notes`。
+Antigravity 按插件根目录下的 `skills/<skill-name>/SKILL.md` 发现技能：`code-workflow` 提供 7 个技能，`search` 提供 `ai-dialog-search`，`notes` 提供 `beautify-notes`。
